@@ -109,6 +109,6 @@ function validateAndTransformRecord(record: Record<string, string>, builderId: s
   }
 }
 
-export const config = {
-  api: { bodyParser: false },
-};
+// export const config = {
+//   api: { bodyParser: false },
+// };
