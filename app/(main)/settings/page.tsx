@@ -76,7 +76,11 @@ export default function SettingsPage() {
   }
 
   if (isLoading) {
-    return <Spinner />
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <Spinner />
+      </div>
+    );
   }
 
   return (
