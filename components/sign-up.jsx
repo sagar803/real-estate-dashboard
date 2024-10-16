@@ -32,7 +32,7 @@ export default function SignUpForm() {
       const { error, data } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: "http://localhost:3000/dashboard"
+          redirectTo: `${process.env.NEXT_PUBLIC_VERCEL_URL}/dashboard`
         }
       })
     } catch (error) {
