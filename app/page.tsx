@@ -20,8 +20,8 @@ import {
 
 
 export default function Home() {
-  const router = useRouter()
-  
+  console.log(process.env.NEXT_PUBLIC_VERCEL_URL)
+
   return (
       <div className="flex flex-col min-h-screen">
         <header className="px-4 lg:px-6 h-14 flex items-center border-b">

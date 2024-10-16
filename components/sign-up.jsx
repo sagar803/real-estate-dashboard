@@ -28,6 +28,7 @@ export default function SignUpForm() {
 
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true)
+    console.log(process.env.NEXT_PUBLIC_VERCEL_URL)
     try {
       const { error, data } = await supabase.auth.signInWithOAuth({
         provider: 'google',
