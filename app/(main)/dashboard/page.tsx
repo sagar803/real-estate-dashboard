@@ -3,14 +3,13 @@
 import React from "react"
 import { BarChart, Bot, Users } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { useUser } from "@/lib/userContext"
 import Spinner from "@/components/Spinner"
 
 const DashboardPage = () => {
-  const { user, builder, isLoading } = useUser();
+  const { isLoading } = useUser();
 
   if (isLoading) {
     return (

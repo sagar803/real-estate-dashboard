@@ -13,7 +13,7 @@ import { useUser } from "@/lib/userContext"
 import { toast } from "sonner"
 
 export default function Component() {
-  const { builder, user } = useUser()
+  const { builder } = useUser()
   const [csvFile, setCsvFile] = useState<File | null>(null)
   const [imageFiles, setImageFiles] = useState<FileList | null>(null)
   const [videoFiles, setVideoFiles] = useState<FileList | null>(null)

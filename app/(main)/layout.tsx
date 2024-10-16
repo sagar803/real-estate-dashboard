@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from "react"
-import { BarChart, Bot, Home, Settings, Upload, LogOutIcon, Menu, X } from "lucide-react"
+import { BarChart, Home, Settings, Upload, LogOutIcon, Menu, X } from "lucide-react"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
