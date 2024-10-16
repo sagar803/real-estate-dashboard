@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
     if (error) throw error
 
-    if (data.length === 0) {
+    if (!data) {
       const { data: newUser, error: insertError } = await supabase
         .from('builder')
         .insert([{ 
