@@ -65,7 +65,7 @@ const LayoutContent: React.FC<{children: React.ReactNode}> = ({ children }) => {
             {sidebarOpen && (
               <div className="flex items-center space-x-2">
                 <h1 className={`text-xl font-bold bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent`}>
-                  ChatBot SaaS
+                  ChatBot&nbsp;SaaS
                 </h1>
               </div>
             )}

@@ -7,10 +7,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useUser } from '@/lib/userContext'
-import Spinner from '@/components/Spinner'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabaseClient'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Settings } from 'lucide-react'
 import LoadingSkeleton from '@/components/LoadingSkeleton'
 
