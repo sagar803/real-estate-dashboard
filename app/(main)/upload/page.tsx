@@ -45,7 +45,7 @@ export default function Component() {
     formData.append('file', file);
     formData.append('builderId', builder.id);
     formData.append('systemInstruction', systemInstruction);
-    formData.append('routeName', routeName);
+    formData.append('routeName', routeName.toLowerCase());
   
     const response = await fetch('/api/upload/data', {
       method: 'POST',

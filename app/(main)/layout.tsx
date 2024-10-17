@@ -60,6 +60,9 @@ const LayoutContent: React.FC<{children: React.ReactNode}> = ({ children }) => {
             <DashboardLink href="/dashboard" icon={Home} sidebarOpen={sidebarOpen}>
               Dashboard
             </DashboardLink>
+            <DashboardLink href="/chatbots" icon={Home} sidebarOpen={sidebarOpen}>
+              Chatbots
+            </DashboardLink>
             <DashboardLink href="/upload" icon={Upload} sidebarOpen={sidebarOpen}>
               Upload Data
             </DashboardLink>

@@ -1,124 +1,130 @@
-// app/settings/page.tsx
-'use client'
+import React from 'react';
+import { Settings, MessageCircle, Link, CreditCard, ChevronRight } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 
-import { useState, useEffect } from 'react'
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { useUser } from '@/lib/userContext'
-import Spinner from '@/components/Spinner'
-import { toast } from 'sonner'
-
-interface Settings {
-  route: string;
-  chatbot_instruction: string;
-}
-
-export default function SettingsPage() {
-  const { builder } = useUser()
-  const [settings, setSettings] = useState<Settings>({
-    route: '',
-    chatbot_instruction: '',
-  })
-  const [isLoading, setIsLoading] = useState<boolean>(true)
-
-  useEffect(() => {
-    const fetchSettings = async () => {
-      setIsLoading(true)
-      try {
-        const response = await fetch(`/api/settings?builderId=${builder?.id}`)
-        if (response.ok) {
-          const data: Settings = await response.json()
-          setSettings(data)
-        } else {
-          console.error('Failed to fetch settings')
-        }
-      } catch (error) {
-        console.error('Error fetching settings:', error)
-      }
-      setIsLoading(false)
-    }
-
-    if (builder?.id) {
-      fetchSettings()
-    }
-  }, [builder?.id])
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setSettings(prev => ({ ...prev, [name]: value }))
-  }
-
-  const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    try {
-      const response = await fetch('/api/settings', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          builderId: builder?.id,
-          settings,
-        }),
-      })
-
-      if (response.ok) {
-        toast.success('Settings saved successfully')
-      } else {
-        toast.error('Failed to save settings')
-      }
-    } catch (error) {
-      console.error('Error saving settings:', error)
-    }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="w-full h-full flex items-center justify-center">
-        <Spinner />
-      </div>
-    );
-  }
-
+const SettingsPage = () => {
   return (
-    <div className="container mx-auto p-4">
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardHeader>
-          <CardTitle>Chatbot Settings</CardTitle>
-          <CardDescription>Customize your chatbot experience</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSave} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="route">Route</Label>
-              <Input
-                id="route"
-                name="route"
-                value={settings.route}
-                onChange={handleInputChange}
-                placeholder="Enter route"
-              />
+    <div className="container mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-6">Chatbot Settings</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Settings className="mr-2" />
+              General Settings
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span>Chatbot Name</span>
+                <input className="border rounded p-1" defaultValue="My Awesome Chatbot" />
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Language</span>
+                <select className="border rounded p-1">
+                  <option>English</option>
+                  <option>Spanish</option>
+                  <option>French</option>
+                </select>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Active</span>
+                <Switch />
+              </div>
             </div>
+          </CardContent>
+        </Card>
 
-            <div className="space-y-2">
-              <Label htmlFor="chatbot-instructions">Chatbot Instructions</Label>
-              <Textarea
-                id="chatbot-instructions"
-                name="chatbot_instruction"
-                value={settings.chatbot_instruction}
-                onChange={handleInputChange}
-                placeholder="Enter chatbot instructions"
-                rows={4}
-              />
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <MessageCircle className="mr-2" />
+              Conversation History
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span>Store Conversations</span>
+                <Switch />
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Retention Period</span>
+                <select className="border rounded p-1">
+                  <option>30 days</option>
+                  <option>60 days</option>
+                  <option>90 days</option>
+                </select>
+              </div>
+              <Button variant="outline">
+                Export Conversations
+              </Button>
             </div>
+          </CardContent>
+        </Card>
 
-            <Button type="submit" className="w-full">Save Settings</Button>
-          </form>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Link className="mr-2" />
+              Integrations
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span>Slack</span>
+                <Button variant="outline" size="sm">Connect</Button>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Discord</span>
+                <Button variant="outline" size="sm">Connect</Button>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Telegram</span>
+                <Button variant="outline" size="sm">Connect</Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <CreditCard className="mr-2" />
+              Billing
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span>Current Plan</span>
+                <span className="font-bold">Pro</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Next Billing Date</span>
+                <span>July 1, 2023</span>
+              </div>
+              <Button variant="outline">
+                Manage Subscription
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="mt-6">
+        <Button className="w-full justify-between" variant="outline">
+          Advanced Settings
+          <ChevronRight className="ml-2 h-4 w-4" />
+        </Button>
+      </div>
     </div>
-  )
-}
+  );
+};
+
+export default SettingsPage;

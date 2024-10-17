@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabaseClient';
 
 interface PropertyRecord {
   id?: number;
-  builder_id: string | null;
+  route: string | null;
   meta: Record<string, any> | null;
   images: string[] | null;
   ratings: Record<string, number> | null;
@@ -28,49 +28,39 @@ export async function POST(request: NextRequest) {
 
     // Check if route name already exists
     const { data: existingRoute, error: routeError } = await supabase
-      .from('builder')
-      .select('settings')
-      .filter('settings->>route', 'eq', routeName)
+      .from('chatbot')
+      .select('configuration')
+      .filter('configuration->>route', 'eq', routeName)
       .single();
 
     if (routeError && routeError.code !== 'PGRST116') {
       throw routeError;
     }
 
-    if (existingRoute && existingRoute.settings.route === routeName) {
+    if (existingRoute && existingRoute.configuration.route === routeName) {
       return NextResponse.json({ error: 'Route already exists' }, { status: 400 });
     }
 
-
-    // Fetch current settings
-    const { data: currentBuilder, error: fetchError } = await supabase
-      .from('builder')
-      .select('settings')
-      .eq('id', builderId)
-      .single();
-
-    if (fetchError) throw fetchError;
-
-    // Merge new settings with existing settings
-    const updatedSettings = {
-      ...(currentBuilder?.settings || {}),
-      route: routeName,
-      chatbot_instruction: systemInstruction
-    };
-
-    // Update builder with merged settings
+    // create chatbot
     const { error: updateError } = await supabase
-      .from('builder')
-      .update({ settings: updatedSettings })
-      .eq('id', builderId);
+      .from('chatbot')
+      .insert([{
+        configuration: {
+          route: routeName,
+          chatbot_instruction: systemInstruction
+        },
+        user_id: builderId,
+        route: routeName
+      }])
 
     if (updateError) throw updateError;
+
 
     // CSV file handling
     const fileContent = await file.text();
     const records = parse(fileContent, { columns: true, skip_empty_lines: true }) as Record<string, string>[];
     const validatedRecords = records
-      .map(record => validateAndTransformRecord(record, builderId))
+      .map(record => validateAndTransformRecord(record, routeName))
       .filter((record): record is PropertyRecord => record !== null);
 
     const { data, error } = await supabase
@@ -90,10 +80,10 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function validateAndTransformRecord(record: Record<string, string>, builderId: string): PropertyRecord | null {
+function validateAndTransformRecord(record: Record<string, string>, routeName: string): PropertyRecord | null {
   try {
     const transformedRecord: PropertyRecord = {
-      builder_id: builderId,
+      route: routeName,
       meta: record.meta ? JSON.parse(record.meta) : null,
       images: record.images ? JSON.parse(record.images) : null,
       ratings: record.ratings ? JSON.parse(record.ratings) : null,
