@@ -11,7 +11,7 @@ import { toast } from 'sonner'
 import { supabase } from '@/lib/supabaseClient'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Settings } from 'lucide-react'
-import LoadingSkeleton from '@/components/LoadingSkeleton'
+import LoadingSkeleton from '@/components/skeleton'
 
 interface Chatbot {
   id: string;
