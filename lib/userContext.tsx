@@ -8,6 +8,9 @@ import useAuthCheck from "@/lib/useAuth";
 type User = {
   id: string;
   email: string;
+  full_name: string;
+  id: string;
+  picture: string;
 };
 
 type Builder = {
@@ -32,14 +35,15 @@ export const UserProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const [builder, setBuilder] = useState<Builder | null>(null);
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuthCheck();
+  console.log(user)
 
   useEffect(() => {
     const checkLogin = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/');
-      } else {
-        setUser(user);
+      console.log(user)
+      if (!user) router.push('/');
+      else {
+        setUser({id: user.id, ...user.user_metadata});
         let res = await fetch('./api/builder', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json'},

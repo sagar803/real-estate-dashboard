@@ -26,7 +26,6 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042']
 export default function AnalyticsPage() {
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">Chatbot Analytics</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>

@@ -6,7 +6,8 @@ import { BarChart, Bot, Users } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { useUser } from "@/lib/userContext"
-import Spinner from "@/components/Spinner"
+import LoadingSkeleton from "@/components/LoadingSkeleton"
+
 
 const DashboardPage = () => {
   const { isLoading } = useUser();
@@ -14,7 +15,7 @@ const DashboardPage = () => {
   if (isLoading) {
     return (
       <div className="w-screen h-screen flex items-center justify-center">
-        <Spinner />
+        <LoadingSkeleton />
       </div>
     );
   }

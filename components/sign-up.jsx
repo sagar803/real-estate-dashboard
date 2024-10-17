@@ -1,40 +1,44 @@
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+// import { useRouter } from 'next/navigation'
+// import { Input } from "@/components/ui/input"
+// import { Loader2 } from 'lucide-react'
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { supabase } from '@/lib/supabaseClient'
-import { Loader2 } from 'lucide-react'
 
 
 export default function SignUpForm() {
-  const [email, setEmail] = useState('')
-  const [loading, setLoading] = useState(false)
+  // const [email, setEmail] = useState('')
+  // const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
-  const router = useRouter()
+  // const router = useRouter()
 
-  const handleEmailSignIn = async (e) => {
-    e.preventDefault()
-    setLoading(true)
+  // const handleEmailSignIn = async (e) => {
+  //   e.preventDefault()
+  //   setLoading(true)
 
-    try {
-      const { error, data } = await supabase.auth.signInWithOtp({ email })
-      if (error) throw error
-    } catch (error) {
-      console.log('Error: ' + error.message)
-    } finally {
-      setLoading(false)
-    }
-  }
+  //   try {
+  //     const { error, data } = await supabase.auth.signInWithOtp({ email })
+  //     if (error) throw error
+  //   } catch (error) {
+  //     console.log('Error: ' + error.message)
+  //   } finally {
+  //     setLoading(false)
+  //   }
+  // }
 
   const handleGoogleSignIn = async () => {
+    await supabase.auth.signOut();
     setGoogleLoading(true)
     console.log(process.env.NEXT_PUBLIC_VERCEL_URL)
     try {
       const { error, data } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${process.env.NEXT_PUBLIC_VERCEL_URL}/dashboard`
-        }
+          redirectTo: `${process.env.NEXT_PUBLIC_VERCEL_URL}/dashboard`,
+          queryParams: {
+            prompt: 'select_account',  // Forces account selection
+          },
+        },  
       })
     } catch (error) {
       console.log('Error: ' + error.message)

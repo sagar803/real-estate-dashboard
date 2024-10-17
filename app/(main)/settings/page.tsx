@@ -6,9 +6,7 @@ import { Switch } from "@/components/ui/switch";
 
 const SettingsPage = () => {
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Chatbot Settings</h1>
-      
+    <div className="container mx-auto p-6">      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>

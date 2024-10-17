@@ -12,6 +12,7 @@ import { toast } from 'sonner'
 import { supabase } from '@/lib/supabaseClient'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Settings } from 'lucide-react'
+import LoadingSkeleton from '@/components/LoadingSkeleton'
 
 interface Chatbot {
   id: string;
@@ -32,9 +33,10 @@ export default function ChatbotsPage() {
 
   useEffect(() => {
     fetchChatbots()
-  }, [builder])
-
+  }, [])
+  
   const fetchChatbots = async () => {
+    console.log(builder)
     if (!builder) return
 
     try {
@@ -44,7 +46,7 @@ export default function ChatbotsPage() {
         .eq('user_id', builder.id)
 
       if (error) throw error
-
+      if(data.length === 0) toast.info('You have not created any chatbot yet.')
       setChatbots(data)
     } catch (error) {
       console.error('Error fetching chatbots:', error)
@@ -93,41 +95,38 @@ export default function ChatbotsPage() {
     setIsDialogOpen(true)
   }
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-full flex items-center justify-center">
-        <Spinner />
-      </div>
-    )
-  }
+  if (isLoading) return <LoadingSkeleton />
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Your Chatbots</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {chatbots.map((chatbot) => (
-          <Card key={chatbot.id} className="relative">
-            <CardHeader>
-              <CardTitle>{chatbot.route}</CardTitle>
-              <CardDescription>
-                Status: {chatbot.active ? 'Active' : 'Inactive'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="truncate">
-                Instruction: {chatbot.configuration.chatbot_instruction}
-              </p>
-            </CardContent>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute top-2 right-2"
-              onClick={() => openDialog(chatbot)}
-            >
-              <Settings className="h-4 w-4" />
-            </Button>
-          </Card>
-        ))}
+        {chatbots.length > 0 ? (
+          chatbots.map((chatbot) => (
+            <Card key={chatbot.id} className="relative">
+              <CardHeader>
+                <CardTitle>{chatbot.route}</CardTitle>
+                <CardDescription>
+                  Status: {chatbot.active ? 'Active' : 'Inactive'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="truncate">
+                  Instruction: {chatbot.configuration.chatbot_instruction}
+                </p>
+              </CardContent>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2"
+                onClick={() => openDialog(chatbot)}
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            </Card>
+          ))) : (
+            <p className="text-gray-600">No chatbots found</p>
+          )
+        }
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
