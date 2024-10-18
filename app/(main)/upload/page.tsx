@@ -1,7 +1,7 @@
 //@ts-nocheck
-'use client'
+"use client"
 
-import { useState, FormEvent } from "react"
+import React, { useState, FormEvent, useCallback, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -11,6 +11,79 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Upload, FileText, Image, Video, FileUp } from "lucide-react"
 import { useUser } from "@/lib/userContext"
 import { toast } from "sonner"
+import { Slider } from "@/components/ui/slider"
+
+const ColorPickerWithOpacity = React.memo(({ rgba, setRgba }) => {
+  const [color, setColor] = useState(() => rgbaToHex(rgba));
+  const [opacity, setOpacity] = useState(() => Math.round(rgba.a * 100));
+
+  const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newColor = e.target.value;
+    setColor(newColor);
+    const [r, g, b] = hexToRgb(newColor);
+    setRgba({ r, g, b, a: rgba.a });
+  };
+
+  const handleOpacityChange = useCallback((value: number[]) => {
+    const newOpacity = value[0] / 100;
+    setOpacity(value[0]);
+    setRgba(prev => ({ ...prev, a: newOpacity }));
+  }, [setRgba]);
+
+  return (
+    <div className="p-4 space-y-2 max-w-md mx-auto">
+      <div className="flex items-center space-x-4">
+        <input
+          type="color"
+          value={color}
+          onChange={handleColorChange}
+          className="w-12 h-12 rounded cursor-pointer"
+        />
+        <span className="font-semibold">{color}</span>
+      </div>
+      <div
+        className="w-full h-24 rounded"
+        style={{ backgroundColor: `rgba(${rgba.r}, ${rgba.g}, ${rgba.b}, ${rgba.a})` }}
+      ></div>
+      <p className="font-mono">
+        RGBA: rgba({rgba.r}, {rgba.g}, {rgba.b}, {rgba.a.toFixed(2)})
+      </p>
+      <div className="space-y-2">
+        <label htmlFor="opacity" className="block font-medium">
+          Opacity: {opacity}%
+        </label>
+        <Slider
+          id="opacity"
+          min={0}
+          max={100}
+          step={1}
+          value={[opacity]}
+          onValueChange={handleOpacityChange}
+        />
+      </div>
+    </div>
+  );
+});
+
+ColorPickerWithOpacity.displayName = 'ColorPickerWithOpacity';
+
+function rgbaToHex({ r, g, b }: { r: number, g: number, b: number }): string {
+  return '#' + [r, g, b].map(x => {
+    const hex = x.toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  }).join('');
+}
+
+function hexToRgb(hex: string): [number, number, number] {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result 
+    ? [
+        parseInt(result[1], 16),
+        parseInt(result[2], 16),
+        parseInt(result[3], 16)
+      ]
+    : [0, 0, 0];
+}
 
 export default function Component() {
   const { builder } = useUser()
@@ -21,15 +94,7 @@ export default function Component() {
   const [systemInstruction, setSystemInstruction] = useState("")
   const [routeName, setRouteName] = useState("")
   const [appName, setAppName] = useState('')
-  const [selectedColor, setSelectedColor] = useState('blue-500')
-  const [selectedOpacity, setSelectedOpacity] = useState(500)
-
-  console.log(selectedColor)
-
-  const tailwindColors = [
-    'red', 'blue', 'green', 'yellow', 'purple', 'pink', 'indigo', 'gray'
-  ]
-  const opacityLevels = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900]
+  const [rgba, setRgba] = useState({ r: 255, g: 209, b: 209, a: 1 }); // #ffd1d1 with full opacity
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -43,21 +108,16 @@ export default function Component() {
         console.error('Upload failed:', error)
       }
     }
-    // console.log('Image Files:', imageFiles)
-    // console.log('Video Files:', videoFiles)
-    // console.log('PDF Files:', pdfFiles)
-    // console.log('System Instruction:', systemInstruction)
-    // console.log('Route Name:', routeName)
   }
 
-  async function uploadData(file: File) {
+  const uploadData = useCallback(async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('builderId', builder.id);
     formData.append('systemInstruction', systemInstruction);
     formData.append('routeName', routeName.toLowerCase());
     formData.append('appName', appName);
-    formData.append('bgColor', selectedColor);
+    formData.append('bgColor', `rgba(${rgba.r},${rgba.g},${rgba.b},${rgba.a})`);
 
     const response = await fetch('/api/upload/data', {
       method: 'POST',
@@ -66,9 +126,9 @@ export default function Component() {
   
     if (!response.ok) throw new Error('Upload failed');  
     return response.json();
-  }
+  }, [builder.id, systemInstruction, routeName, appName, rgba]);
 
-  const FileUploadSection = ({ id, label, accept, icon: Icon, files, setFiles, multiple = false }) => (
+  const FileUploadSection = useMemo(() => ({ id, label, accept, icon: Icon, files, setFiles, multiple = false }) => (
     <div className="space-y-2">
       <Label htmlFor={id} className="flex items-center gap-2">
         <Icon className="w-4 h-4" />
@@ -103,61 +163,9 @@ export default function Component() {
         </Label>
       </div>
     </div>
-  )
+  ), []);
 
-const ColorSelector: React.FC<{
-  selectedColor: string
-  setSelectedColor: React.Dispatch<React.SetStateAction<string>>
-  selectedOpacity: number
-  setSelectedOpacity: React.Dispatch<React.SetStateAction<number>>
-}> = ({ selectedColor, setSelectedColor, selectedOpacity, setSelectedOpacity }) => {
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        {tailwindColors.map((color) => (
-          <button
-            key={color}
-            className={`w-8 h-8 rounded-full ${color === selectedColor.split('-')[0] ? 'ring-2 ring-offset-2 ring-gray-400' : ''} border border-black ${'bg-'+color+'-'+'500'}`}
-            onClick={() => setSelectedColor(`${color}-${selectedOpacity}`)}
-            // className={`w-8 h-8 rounded-full ${
-            //   color === selectedColor.split('-')[0]
-            //     ? 'ring-2 ring-offset-2 ring-gray-400'
-            //     : 'border border-gray-300'
-            // }`}
-            style={{ backgroundColor: `rgb(var(--${color}-500))` }}
-            aria-label={`Select ${color} color`}
-          />
-        ))}
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="opacity">Opacity</Label>
-        <select
-          id="opacity"
-          className="w-full p-2 border rounded"
-          value={selectedOpacity}
-          onChange={(e) => {
-            const newOpacity = Number(e.target.value)
-            setSelectedOpacity(newOpacity)
-            setSelectedColor(`${selectedColor.split('-')[0]}-${newOpacity}`)
-          }}
-        >
-          {opacityLevels.map((level) => (
-            <option key={level} value={level}>
-              {level}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="mt-4">
-        <Label>Selected Color</Label>
-        <div 
-          className={`w-full h-12 rounded mt-1 border border-gray-300`}
-          style={{ backgroundColor: `rgb(var(--${selectedColor}))` }}
-        />
-      </div>
-    </div>
-  )
-}
+  const isSubmitDisabled = !(systemInstruction && routeName && csvFile && appName);
 
   return (
     <div className="container mx-auto p-4">
@@ -175,7 +183,7 @@ const ColorSelector: React.FC<{
                 <TabsTrigger value="appearance">Appearance</TabsTrigger>
               </TabsList>
               <hr className="mt-4"/>
-              <TabsContent value="files" className="mt-10 grid md:grid-cols-2 gap-4">
+              <TabsContent value="files" className="mt-4 grid md:grid-cols-2 gap-4">
                 <FileUploadSection
                   id="csv-upload"
                   label="CSV Files"
@@ -233,31 +241,29 @@ const ColorSelector: React.FC<{
                   />
                 </div>
               </TabsContent>
-              <TabsContent value="appearance" className="mt-10 space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="app-name">App Name</Label>
-                <Input 
-                  id="app-name" 
-                  placeholder="Enter app name"
-                  value={appName}
-                  onChange={(e) => setAppName(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Background Color</Label>
-                <ColorSelector
-                  selectedColor={selectedColor}
-                  setSelectedColor={setSelectedColor}
-                  selectedOpacity={selectedOpacity}
-                  setSelectedOpacity={setSelectedOpacity}
-                />
-              </div>
+              <TabsContent value="appearance" className="mt-4 space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="app-name">App Name</Label>
+                  <Input 
+                    id="app-name" 
+                    placeholder="Enter app name"
+                    value={appName}
+                    onChange={(e) => setAppName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Background Color</Label>
+                  <ColorPickerWithOpacity
+                    rgba={rgba}
+                    setRgba={setRgba}
+                  />
+                </div>
             </TabsContent>
             </Tabs>
             <Button 
               type="submit" 
               className="select-none w-full"
-              disabled={!(systemInstruction && routeName && csvFile && appName && selectedColor)}
+              disabled={isSubmitDisabled}
             >
               <Upload className="w-4 h-4 mr-2" />
                 Generate Chatbot
