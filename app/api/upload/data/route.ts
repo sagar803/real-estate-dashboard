@@ -16,7 +16,7 @@ interface PropertyRecord {
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
-    const builderId = formData.get('builderId') as string | null;
+    const builderId = formData.get('userId') as string | null;
     const routeName = formData.get('routeName') as string | null;
     const systemInstruction = formData.get('systemInstruction') as string | null;
     const file = formData.get('file') as File | null;
@@ -52,7 +52,6 @@ export async function POST(request: NextRequest) {
           app_name: appName,
         },
         user_id: builderId,
-        route: routeName
       }])
 
     if (updateError) throw updateError;

@@ -86,7 +86,7 @@ function hexToRgb(hex: string): [number, number, number] {
 }
 
 export default function Component() {
-  const { builder } = useUser()
+  const { user } = useUser()
   const [csvFile, setCsvFile] = useState<File | null>(null)
   const [imageFiles, setImageFiles] = useState<FileList | null>(null)
   const [videoFiles, setVideoFiles] = useState<FileList | null>(null)
@@ -113,7 +113,7 @@ export default function Component() {
   const uploadData = useCallback(async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('builderId', builder.id);
+    formData.append('userId', user.id);
     formData.append('systemInstruction', systemInstruction);
     formData.append('routeName', routeName.toLowerCase());
     formData.append('appName', appName);
@@ -126,7 +126,7 @@ export default function Component() {
   
     if (!response.ok) throw new Error('Upload failed');  
     return response.json();
-  }, [builder.id, systemInstruction, routeName, appName, rgba]);
+  }, [user.id, systemInstruction, routeName, appName, rgba]);
 
   const FileUploadSection = useMemo(() => ({ id, label, accept, icon: Icon, files, setFiles, multiple = false }) => (
     <div className="space-y-2">

@@ -15,7 +15,6 @@ import LoadingSkeleton from '@/components/skeleton'
 
 interface Chatbot {
   id: string;
-  route: string;
   configuration: {
     route: string;
     chatbot_instruction: string;
@@ -24,7 +23,7 @@ interface Chatbot {
 }
 
 export default function ChatbotsPage() {
-  const { builder } = useUser()
+  const { user } = useUser()
   const [chatbots, setChatbots] = useState<Chatbot[]>([])
   const [selectedChatbot, setSelectedChatbot] = useState<Chatbot | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -35,14 +34,13 @@ export default function ChatbotsPage() {
   }, [])
   
   const fetchChatbots = async () => {
-    console.log(builder)
-    if (!builder) return
+    if (!user) return
 
     try {
       const { data, error } = await supabase
         .from('chatbot')
         .select('*')
-        .eq('user_id', builder.id)
+        .eq('user_id', user.id)
 
       if (error) throw error
       if(data.length === 0) toast.info('You have not created any chatbot yet.')
@@ -61,7 +59,6 @@ export default function ChatbotsPage() {
         .from('chatbot')
         .update({ 
           configuration: newConfig,
-          route: newConfig.route
         })
         .eq('id', id)
 
@@ -103,7 +100,7 @@ export default function ChatbotsPage() {
           chatbots.map((chatbot) => (
             <Card key={chatbot.id} className="relative">
               <CardHeader>
-                <CardTitle>{chatbot.route}</CardTitle>
+                <CardTitle>{chatbot?.configuration?.route}</CardTitle>
                 <CardDescription>
                   Status: {chatbot.active ? 'Active' : 'Inactive'}
                 </CardDescription>
