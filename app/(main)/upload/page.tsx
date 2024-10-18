@@ -20,6 +20,16 @@ export default function Component() {
   const [pdfFiles, setPdfFiles] = useState<FileList | null>(null)
   const [systemInstruction, setSystemInstruction] = useState("")
   const [routeName, setRouteName] = useState("")
+  const [appName, setAppName] = useState('')
+  const [selectedColor, setSelectedColor] = useState('blue-500')
+  const [selectedOpacity, setSelectedOpacity] = useState(500)
+
+  console.log(selectedColor)
+
+  const tailwindColors = [
+    'red', 'blue', 'green', 'yellow', 'purple', 'pink', 'indigo', 'gray'
+  ]
+  const opacityLevels = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900]
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -46,7 +56,9 @@ export default function Component() {
     formData.append('builderId', builder.id);
     formData.append('systemInstruction', systemInstruction);
     formData.append('routeName', routeName.toLowerCase());
-  
+    formData.append('appName', appName);
+    formData.append('bgColor', selectedColor);
+
     const response = await fetch('/api/upload/data', {
       method: 'POST',
       body: formData,
@@ -93,6 +105,60 @@ export default function Component() {
     </div>
   )
 
+const ColorSelector: React.FC<{
+  selectedColor: string
+  setSelectedColor: React.Dispatch<React.SetStateAction<string>>
+  selectedOpacity: number
+  setSelectedOpacity: React.Dispatch<React.SetStateAction<number>>
+}> = ({ selectedColor, setSelectedColor, selectedOpacity, setSelectedOpacity }) => {
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        {tailwindColors.map((color) => (
+          <button
+            key={color}
+            className={`w-8 h-8 rounded-full ${color === selectedColor.split('-')[0] ? 'ring-2 ring-offset-2 ring-gray-400' : ''} border border-black ${'bg-'+color+'-'+'500'}`}
+            onClick={() => setSelectedColor(`${color}-${selectedOpacity}`)}
+            // className={`w-8 h-8 rounded-full ${
+            //   color === selectedColor.split('-')[0]
+            //     ? 'ring-2 ring-offset-2 ring-gray-400'
+            //     : 'border border-gray-300'
+            // }`}
+            style={{ backgroundColor: `rgb(var(--${color}-500))` }}
+            aria-label={`Select ${color} color`}
+          />
+        ))}
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="opacity">Opacity</Label>
+        <select
+          id="opacity"
+          className="w-full p-2 border rounded"
+          value={selectedOpacity}
+          onChange={(e) => {
+            const newOpacity = Number(e.target.value)
+            setSelectedOpacity(newOpacity)
+            setSelectedColor(`${selectedColor.split('-')[0]}-${newOpacity}`)
+          }}
+        >
+          {opacityLevels.map((level) => (
+            <option key={level} value={level}>
+              {level}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="mt-4">
+        <Label>Selected Color</Label>
+        <div 
+          className={`w-full h-12 rounded mt-1 border border-gray-300`}
+          style={{ backgroundColor: `rgb(var(--${selectedColor}))` }}
+        />
+      </div>
+    </div>
+  )
+}
+
   return (
     <div className="container mx-auto p-4">
       <Card className="w-full bg-white">
@@ -103,9 +169,10 @@ export default function Component() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <Tabs defaultValue="files" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="files">File Upload</TabsTrigger>
                 <TabsTrigger value="instructions">Instructions</TabsTrigger>
+                <TabsTrigger value="appearance">Appearance</TabsTrigger>
               </TabsList>
               <hr className="mt-4"/>
               <TabsContent value="files" className="mt-10 grid md:grid-cols-2 gap-4">
@@ -166,11 +233,31 @@ export default function Component() {
                   />
                 </div>
               </TabsContent>
+              <TabsContent value="appearance" className="mt-10 space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="app-name">App Name</Label>
+                <Input 
+                  id="app-name" 
+                  placeholder="Enter app name"
+                  value={appName}
+                  onChange={(e) => setAppName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Background Color</Label>
+                <ColorSelector
+                  selectedColor={selectedColor}
+                  setSelectedColor={setSelectedColor}
+                  selectedOpacity={selectedOpacity}
+                  setSelectedOpacity={setSelectedOpacity}
+                />
+              </div>
+            </TabsContent>
             </Tabs>
             <Button 
               type="submit" 
               className="select-none w-full"
-              disabled={!(systemInstruction && routeName && csvFile)}
+              disabled={!(systemInstruction && routeName && csvFile && appName && selectedColor)}
             >
               <Upload className="w-4 h-4 mr-2" />
                 Generate Chatbot

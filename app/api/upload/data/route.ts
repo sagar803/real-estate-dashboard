@@ -20,6 +20,8 @@ export async function POST(request: NextRequest) {
     const routeName = formData.get('routeName') as string | null;
     const systemInstruction = formData.get('systemInstruction') as string | null;
     const file = formData.get('file') as File | null;
+    const bgColor = formData.get('bgColor') as string
+    const appName = formData.get('appName') as string
 
     if (!file) return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
     if (!builderId) return NextResponse.json({ error: 'Builder ID is required' }, { status: 400 });
@@ -33,9 +35,7 @@ export async function POST(request: NextRequest) {
       .filter('configuration->>route', 'eq', routeName)
       .single();
 
-    if (routeError && routeError.code !== 'PGRST116') {
-      throw routeError;
-    }
+    if (routeError && routeError.code !== 'PGRST116') throw routeError;
 
     if (existingRoute && existingRoute.configuration.route === routeName) {
       return NextResponse.json({ error: 'Route already exists' }, { status: 400 });
@@ -47,7 +47,9 @@ export async function POST(request: NextRequest) {
       .insert([{
         configuration: {
           route: routeName,
-          chatbot_instruction: systemInstruction
+          chatbot_instruction: systemInstruction,
+          bg_color: bgColor,
+          app_name: appName,
         },
         user_id: builderId,
         route: routeName
