@@ -16,7 +16,7 @@ interface PropertyRecord {
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
-    const builderId = formData.get('userId') as string | null;
+    const userId = formData.get('userId') as string | null;
     const routeName = formData.get('routeName') as string | null;
     const systemInstruction = formData.get('systemInstruction') as string | null;
     const file = formData.get('file') as File | null;
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     const appName = formData.get('appName') as string
 
     if (!file) return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
-    if (!builderId) return NextResponse.json({ error: 'Builder ID is required' }, { status: 400 });
+    if (!userId) return NextResponse.json({ error: 'Builder ID is required' }, { status: 400 });
     if (!routeName) return NextResponse.json({ error: 'Route name is required' }, { status: 400 });
     if (!systemInstruction) return NextResponse.json({ error: 'System instruction is required' }, { status: 400 });
 
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
           bg_color: bgColor,
           app_name: appName,
         },
-        user_id: builderId,
+        user_id: userId,
       }])
 
     if (updateError) throw updateError;

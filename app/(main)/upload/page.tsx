@@ -31,7 +31,7 @@ const ColorPickerWithOpacity = React.memo(({ rgba, setRgba }) => {
   }, [setRgba]);
 
   return (
-    <div className="p-4 space-y-2 max-w-md mx-auto">
+    <div className="space-y-2">
       <div className="flex items-center space-x-4">
         <input
           type="color"
@@ -49,9 +49,9 @@ const ColorPickerWithOpacity = React.memo(({ rgba, setRgba }) => {
         RGBA: rgba({rgba.r}, {rgba.g}, {rgba.b}, {rgba.a.toFixed(2)})
       </p>
       <div className="space-y-2">
-        <label htmlFor="opacity" className="block font-medium">
+        <Label htmlFor="opacity">
           Opacity: {opacity}%
-        </label>
+        </Label>
         <Slider
           id="opacity"
           min={0}
@@ -94,7 +94,7 @@ export default function Component() {
   const [systemInstruction, setSystemInstruction] = useState("")
   const [routeName, setRouteName] = useState("")
   const [appName, setAppName] = useState('')
-  const [rgba, setRgba] = useState({ r: 255, g: 209, b: 209, a: 1 }); // #ffd1d1 with full opacity
+  const [rgba, setRgba] = useState({ r: 255, g: 209, b: 209, a: 1 });
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -169,9 +169,9 @@ export default function Component() {
 
   return (
     <div className="container mx-auto p-4">
-      <Card className="w-full bg-white">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Upload Data</CardTitle>
+          <CardTitle>Upload Data</CardTitle>
           <CardDescription>Upload your files and provide instructions to train your chatbot</CardDescription>
         </CardHeader>
         <CardContent>
@@ -182,7 +182,6 @@ export default function Component() {
                 <TabsTrigger value="instructions">Instructions</TabsTrigger>
                 <TabsTrigger value="appearance">Appearance</TabsTrigger>
               </TabsList>
-              <hr className="mt-4"/>
               <TabsContent value="files" className="mt-4 grid md:grid-cols-2 gap-4">
                 <FileUploadSection
                   id="csv-upload"
@@ -226,7 +225,6 @@ export default function Component() {
                   <Textarea
                     id="system-instruction"
                     placeholder="Enter system instructions here..."
-                    className="min-h-[150px]"
                     value={systemInstruction}
                     onChange={(e) => setSystemInstruction(e.target.value)}
                   />
@@ -262,11 +260,11 @@ export default function Component() {
             </Tabs>
             <Button 
               type="submit" 
-              className="select-none w-full"
+              className="w-full"
               disabled={isSubmitDisabled}
             >
               <Upload className="w-4 h-4 mr-2" />
-                Generate Chatbot
+              Generate Chatbot
             </Button>
           </form>
         </CardContent>

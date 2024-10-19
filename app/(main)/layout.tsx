@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import Spinner from "@/components/Spinner"
 import { UserProvider, useUser } from "@/lib/userContext"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ModeToggle } from "@/components/mode-toggle"
 
 type DashboardLinkProps = {
   href: string;
@@ -20,7 +21,7 @@ type DashboardLinkProps = {
 };
 
 const DashboardLink: React.FC<DashboardLinkProps> = ({ href, icon: Icon, children, sidebarOpen, isActive }) => (
-  <Link href={href} className={`flex items-center ${!sidebarOpen ? "justify-center px-3" : "px-4"} py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-all duration-200 ${isActive ? 'bg-primary/10 text-primary' : ''}`}>
+  <Link href={href} className={`flex items-center ${!sidebarOpen ? "justify-center px-3" : "px-4"} py-3 rounded-md transition-all duration-200 ${isActive ? 'bg-primary/10 text-primary' : ''}`}>
     <Icon className={`h-5 w-5 ${isActive ? 'text-primary' : ''}`} />
     {sidebarOpen && (
       <>
@@ -57,14 +58,14 @@ const LayoutContent: React.FC<{children: React.ReactNode}> = ({ children }) => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+    <div className="flex h-screen">
       {/* Sidebar */}
-      <aside className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-full flex flex-col justify-between transition-all duration-300 ease-in-out`}>
+      <aside className={`${sidebarOpen ? 'w-64' : 'w-16'} border-r dark:border-gray-500 h-full flex flex-col justify-between transition-all duration-300 ease-in-out`}>
         <div>
           <div className="p-4 flex items-center justify-between">
             {sidebarOpen && (
               <div className="flex items-center space-x-2">
-                <h1 className={`text-xl font-bold bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent`}>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent">
                   ChatBot&nbsp;SaaS
                 </h1>
               </div>
@@ -73,7 +74,7 @@ const LayoutContent: React.FC<{children: React.ReactNode}> = ({ children }) => {
               variant="ghost"
               size="icon"
               onClick={toggleSidebar}
-              className="p-0 h-8 w-8 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+              className="p-0 h-8 w-8 rounded-full"
             >
               {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
@@ -105,7 +106,7 @@ const LayoutContent: React.FC<{children: React.ReactNode}> = ({ children }) => {
               </Avatar>
               <div>
                 <p className="text-sm font-medium">{user?.full_name}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
+                <p className="text-xs text-muted-foreground">{user?.email}</p>
               </div>
             </div>
           ) : (
@@ -130,22 +131,23 @@ const LayoutContent: React.FC<{children: React.ReactNode}> = ({ children }) => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 py-4 px-6 shadow-sm">
+        <header className="border-b dark:border-gray-500 py-4 px-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">{pageTitle}</h2>
+            <h2 className="text-2xl font-semibold">{pageTitle}</h2>
             <div className="flex items-center space-x-4">
               <div className="relative">
                 <Input
                   type="search"
                   placeholder="Search..."
-                  className="pl-10 pr-4 py-2 rounded-full bg-gray-100 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="pl-10 pr-4 py-2 rounded-full"
                 />
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
               </div>
               <Button variant="ghost" size="icon" className="relative">
                 <Bell size={18} />
                 <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
               </Button>
+              <ModeToggle />
             </div>
           </div>
         </header>

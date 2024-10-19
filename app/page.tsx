@@ -1,8 +1,5 @@
 'use client'
 import SignUpForm from '@/components/sign-up'
-import useAuthCheck from '@/lib/useAuth'
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { CardContent, Card } from "@/components/ui/card"
@@ -11,12 +8,10 @@ import { MessageSquare, Zap, Shield, BarChart, User, LogIn } from "lucide-react"
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { ModeToggle } from '@/components/mode-toggle'
 
 
 export default function Home() {  
@@ -57,6 +52,7 @@ export default function Home() {
               </DialogContent>
             </Dialog>
           )}
+          <ModeToggle />
         </header>
         <main className="flex-1">
           <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-muted">

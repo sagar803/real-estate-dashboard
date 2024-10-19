@@ -67,7 +67,6 @@ export default function ChatbotsPage() {
       toast.success('Chatbot configuration updated successfully')
       setIsDialogOpen(false)
       
-      // Fetch the updated data
       await fetchChatbots()
     } catch (error) {
       console.error('Error updating chatbot:', error)
@@ -120,7 +119,7 @@ export default function ChatbotsPage() {
               </Button>
             </Card>
           ))) : (
-            <p className="text-gray-600">No chatbots found</p>
+            <p className="text-muted-foreground">No chatbots found</p>
           )
         }
       </div>

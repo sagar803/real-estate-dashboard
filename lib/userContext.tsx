@@ -49,7 +49,6 @@ export const UserProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     const { error } = await supabase.auth.signOut();
     if (!error) {
       setUser(null);
-      setBuilder(null);
       router.push('/');
     }
   };
