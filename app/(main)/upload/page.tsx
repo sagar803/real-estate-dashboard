@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Upload, FileText, Image, Video, FileUp } from "lucide-react"
+import { Upload, FileText, Image, Video, FileUp, ExternalLink } from "lucide-react"
 import { useUser } from "@/lib/userContext"
 import { toast } from "sonner"
 import { Slider } from "@/components/ui/slider"
+import { Link1Icon } from "@radix-ui/react-icons"
 
 const ColorPickerWithOpacity = React.memo(({ rgba, setRgba }) => {
   const [color, setColor] = useState(() => rgbaToHex(rgba));
@@ -87,6 +88,7 @@ function hexToRgb(hex: string): [number, number, number] {
 
 export default function Component() {
   const { user } = useUser()
+  const [isLoading, setIsLoading]  = useState()
   const [csvFile, setCsvFile] = useState<File | null>(null)
   const [imageFiles, setImageFiles] = useState<FileList | null>(null)
   const [videoFiles, setVideoFiles] = useState<FileList | null>(null)
@@ -95,17 +97,38 @@ export default function Component() {
   const [routeName, setRouteName] = useState("")
   const [appName, setAppName] = useState('')
   const [rgba, setRgba] = useState({ r: 255, g: 209, b: 209, a: 1 });
+  const [chatbotUrl, setChatbotUrl] = useState('')
 
   const handleSubmit = async (e: FormEvent) => {
+    console.log(user)
+    setIsLoading(true)
     e.preventDefault()
     if (csvFile && systemInstruction && routeName) {
       try {
         const result = await uploadData(csvFile)
-        toast.success("Chatbot successfully created")
+        setChatbotUrl("https://saaaas.vercel.app/"+result.route)
+        toast(<div>
+                <p className="font-bold">{"Chatbot successfully created"}</p>
+                  <a href={"https://saaaas.vercel.app/"+result.route} className="flex gap-1 items-center" target="_blank" rel="noopener noreferrer">
+                      {"https://saaaas.vercel.app/"+result.route}
+                      <ExternalLink strokeWidth={1} size={20}/>
+                  </a>
+              </div>
+              ,
+              {
+                duration: 8000,
+              }
+            )
+        // toast.message("Chatbot successfully created" ,{
+        //   description: "https://saaaas.vercel.app/"+result.route
+        // })
         console.log('Upload result:', result)
       } catch (error) {
         toast.error("Failed to create chatbot")
         console.error('Upload failed:', error)
+      }
+      finally{
+        setIsLoading(false)
       }
     }
   }
@@ -113,7 +136,7 @@ export default function Component() {
   const uploadData = useCallback(async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('userId', user.id);
+    formData.append('userId', user?.id);
     formData.append('systemInstruction', systemInstruction);
     formData.append('routeName', routeName.toLowerCase());
     formData.append('appName', appName);
@@ -126,7 +149,7 @@ export default function Component() {
   
     if (!response.ok) throw new Error('Upload failed');  
     return response.json();
-  }, [user.id, systemInstruction, routeName, appName, rgba]);
+  }, [user?.id, systemInstruction, routeName, appName, rgba]);
 
   const FileUploadSection = useMemo(() => ({ id, label, accept, icon: Icon, files, setFiles, multiple = false }) => (
     <div className="space-y-2">
@@ -165,7 +188,8 @@ export default function Component() {
     </div>
   ), []);
 
-  const isSubmitDisabled = !(systemInstruction && routeName && csvFile && appName);
+  const isSubmitDisabled = !(systemInstruction && routeName && csvFile && appName && !isLoading);
+
 
   return (
     <div className="container mx-auto p-4">
@@ -262,9 +286,16 @@ export default function Component() {
               type="submit" 
               className="w-full"
               disabled={isSubmitDisabled}
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              Generate Chatbot
+            > 
+             {isLoading ? 
+              'Creating...' :
+              (
+                <>
+                  <Upload className="w-4 h-4 mr-2" />
+                  {"Generate Chatbot"}
+                </>
+              )
+             }
             </Button>
           </form>
         </CardContent>

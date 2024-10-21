@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       message: 'Upload successful', 
       count: validatedRecords.length,
-      routeName: routeName
+      route: routeName
     });
   } catch (error) {
     console.error('Error processing request:', error);
