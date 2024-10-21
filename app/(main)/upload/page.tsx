@@ -103,6 +103,7 @@ export default function Component() {
   const [chatbotUrl, setChatbotUrl] = useState('')
 
   const uploadFiles = async (files, bucket) => {
+    if(!files || !bucket) return []
     const uploadedUrls = [];
 
     for (const file of files) {
@@ -118,7 +119,6 @@ export default function Component() {
       const publicUrl = supabase.storage.from(bucket).getPublicUrl(filePath).data.publicUrl;
       uploadedUrls.push(publicUrl);
     }
-
     return uploadedUrls;
   };
 
@@ -131,12 +131,11 @@ export default function Component() {
     setIsLoading(true)    
     try {
       const { data: existingRoute, error: routeError } = await supabase
-      .from('chatbot')
-      .select('configuration')
-      .filter('configuration->>route', 'eq', routeName)
-      .single();
+        .from('chatbot')
+        .select('configuration')
+        .filter('configuration->>route', 'eq', routeName.toLowerCase())        
 
-      if (existingRoute && existingRoute.configuration.route === data.routeName) {
+      if (existingRoute && existingRoute.length > 0) {
         toast.error("Route already exists. Please choose a unique route name.");
         return;
       }
@@ -155,7 +154,7 @@ export default function Component() {
       setIsLoading(false)
     }
   }
-
+  
   const uploadData = useCallback(async (file, uploadedImageUrls, uploadedVideoUrls ) => {
     const formData = new FormData();
     formData.append('file', file);
