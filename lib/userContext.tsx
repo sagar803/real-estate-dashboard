@@ -27,7 +27,6 @@ export const UserProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuthCheck();
-  console.log(user)
 
   useEffect(() => {
     const checkLogin = async () => {

@@ -8,11 +8,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Upload, FileText, Image, Video, FileUp, ExternalLink } from "lucide-react"
+import { Upload, FileText, Image, Video, FileUp, ExternalLink, Loader2 } from "lucide-react"
 import { useUser } from "@/lib/userContext"
 import { toast } from "sonner"
 import { Slider } from "@/components/ui/slider"
 import { Link1Icon } from "@radix-ui/react-icons"
+import { supabase } from "@/lib/supabaseClient"
+import { v4 as uuidv4 } from 'uuid';
+
 
 const ColorPickerWithOpacity = React.memo(({ rgba, setRgba }) => {
   const [color, setColor] = useState(() => rgbaToHex(rgba));
@@ -88,7 +91,7 @@ function hexToRgb(hex: string): [number, number, number] {
 
 export default function Component() {
   const { user } = useUser()
-  const [isLoading, setIsLoading]  = useState()
+  const [isLoading, setIsLoading]  = useState(false)
   const [csvFile, setCsvFile] = useState<File | null>(null)
   const [imageFiles, setImageFiles] = useState<FileList | null>(null)
   const [videoFiles, setVideoFiles] = useState<FileList | null>(null)
@@ -99,47 +102,69 @@ export default function Component() {
   const [rgba, setRgba] = useState({ r: 255, g: 209, b: 209, a: 1 });
   const [chatbotUrl, setChatbotUrl] = useState('')
 
+  const uploadFiles = async (files, bucket) => {
+    const uploadedUrls = [];
+
+    for (const file of files) {
+      const uniqueId = uuidv4();
+      const filePath = `${uniqueId}_${file.name}`;
+      const { error } = await supabase.storage.from(bucket).upload(filePath, file);
+
+      if (error) {
+        console.error(`Error uploading ${file.name}:`, error);
+        continue;
+      }
+
+      const publicUrl = supabase.storage.from(bucket).getPublicUrl(filePath).data.publicUrl;
+      uploadedUrls.push(publicUrl);
+    }
+
+    return uploadedUrls;
+  };
+
   const handleSubmit = async (e: FormEvent) => {
-    console.log(user)
-    setIsLoading(true)
     e.preventDefault()
-    if (csvFile && systemInstruction && routeName) {
-      try {
-        const result = await uploadData(csvFile)
-        setChatbotUrl("https://saaaas.vercel.app/"+result.route)
-        toast(<div>
-                <p className="font-bold">{"Chatbot successfully created"}</p>
-                  <a href={"https://saaaas.vercel.app/"+result.route} className="flex gap-1 items-center" target="_blank" rel="noopener noreferrer">
-                      {"https://saaaas.vercel.app/"+result.route}
-                      <ExternalLink strokeWidth={1} size={20}/>
-                  </a>
-              </div>
-              ,
-              {
-                duration: 8000,
-              }
-            )
-        // toast.message("Chatbot successfully created" ,{
-        //   description: "https://saaaas.vercel.app/"+result.route
-        // })
-        console.log('Upload result:', result)
-      } catch (error) {
-        toast.error("Failed to create chatbot")
-        console.error('Upload failed:', error)
+    if (!csvFile || !systemInstruction || !routeName) {
+      toast.error("Please provide all required inputs");
+      return;
+    }
+    setIsLoading(true)    
+    try {
+      const { data: existingRoute, error: routeError } = await supabase
+      .from('chatbot')
+      .select('configuration')
+      .filter('configuration->>route', 'eq', routeName)
+      .single();
+
+      if (existingRoute && existingRoute.configuration.route === data.routeName) {
+        toast.error("Route already exists. Please choose a unique route name.");
+        return;
       }
-      finally{
-        setIsLoading(false)
-      }
+      const uploadedImageUrls = await uploadFiles(imageFiles, 'images');
+      const uploadedVideoUrls = await uploadFiles(videoFiles, 'videos');
+
+      const result = await uploadData(csvFile, uploadedImageUrls, uploadedVideoUrls)
+      setChatbotUrl("https://saaaas.vercel.app/"+result.route)
+      toast(<div><p className="font-bold">{"Chatbot successfully created"}</p><a href={"https://saaaas.vercel.app/"+result.route} className="flex gap-1 items-center" target="_blank" rel="noopener noreferrer">{"https://saaaas.vercel.app/"+result.route}<ExternalLink strokeWidth={1} size={20}/></a></div> , {duration: 8000})
+      console.log('Upload result:', result)
+    } catch (error) {
+      toast.error("Failed to create chatbot")
+      console.error('Upload failed:', error)
+    }
+    finally{
+      setIsLoading(false)
     }
   }
 
-  const uploadData = useCallback(async (file: File) => {
+  const uploadData = useCallback(async (file, uploadedImageUrls, uploadedVideoUrls ) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('userId', user?.id);
     formData.append('systemInstruction', systemInstruction);
     formData.append('routeName', routeName.toLowerCase());
     formData.append('appName', appName);
+    formData.append('imagesUrl', JSON.stringify(uploadedImageUrls));
+    formData.append('videosUrl', JSON.stringify(uploadedVideoUrls));
     formData.append('bgColor', `rgba(${rgba.r},${rgba.g},${rgba.b},${rgba.a})`);
 
     const response = await fetch('/api/upload/data', {
@@ -174,10 +199,10 @@ export default function Component() {
         />
         <Label
           htmlFor={id}
-          className="flex-1 py-8 border-2 border-dashed rounded-md cursor-pointer hover:bg-muted transition-colors duration-200 flex flex-col items-center justify-center text-muted-foreground"
+          className={` flex-1 py-8 border-2 border-dashed rounded-md cursor-pointer hover:bg-muted transition-colors duration-200 flex flex-col items-center justify-center text-muted-foreground ${((multiple && files && files.length > 0) || (!multiple && files)) ? "border-blue-500 bg-blue-100 dark:bg-blue-950" : ''}`}
         >
           <FileUp className="w-8 h-8 mb-2" />
-          <span>Click to upload or drag and drop</span>
+          <span>Click to upload</span>
           <span className="text-xs">
             {files 
               ? (multiple ? `${files.length} file(s) selected` : '1 file selected') 
@@ -287,15 +312,17 @@ export default function Component() {
               className="w-full"
               disabled={isSubmitDisabled}
             > 
-             {isLoading ? 
-              'Creating...' :
-              (
-                <>
-                  <Upload className="w-4 h-4 mr-2" />
-                  {"Generate Chatbot"}
-                </>
-              )
-             }
+             {isLoading ? (
+              <div className="flex items-center">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {'Processing...'}
+              </div>
+              ) : (
+              <>
+                <Upload className="w-4 h-4 mr-2" />
+                {"Generate Chatbot"}
+              </>
+            )}
             </Button>
           </form>
         </CardContent>

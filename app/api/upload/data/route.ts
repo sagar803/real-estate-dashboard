@@ -10,70 +10,72 @@ interface PropertyRecord {
   ratings: Record<string, number> | null;
   features: string[] | null;
   link: string | null;
-  videoUrl: string | null;
+  videos: string[] | null;
 }
 
 export async function POST(request: NextRequest) {
   try {
+    // Extract form data
     const formData = await request.formData();
-    const userId = formData.get('userId') as string | null;
-    const routeName = formData.get('routeName') as string | null;
-    const systemInstruction = formData.get('systemInstruction') as string | null;
-    const file = formData.get('file') as File | null;
-    const bgColor = formData.get('bgColor') as string
-    const appName = formData.get('appName') as string
+    const requiredFields = ['userId', 'routeName', 'systemInstruction', 'file'];
+    const optionalFields = ['bgColor', 'appName', 'imagesUrl', 'videosUrl'];
 
-    if (!file) return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
-    if (!userId) return NextResponse.json({ error: 'Builder ID is required' }, { status: 400 });
-    if (!routeName) return NextResponse.json({ error: 'Route name is required' }, { status: 400 });
-    if (!systemInstruction) return NextResponse.json({ error: 'System instruction is required' }, { status: 400 });
-
-    // Check if route name already exists
-    const { data: existingRoute, error: routeError } = await supabase
-      .from('chatbot')
-      .select('configuration')
-      .filter('configuration->>route', 'eq', routeName)
-      .single();
-
-    if (routeError && routeError.code !== 'PGRST116') throw routeError;
-
-    if (existingRoute && existingRoute.configuration.route === routeName) {
-      return NextResponse.json({ error: 'Route already exists' }, { status: 400 });
+    // Create an object to hold the form data
+    const data: Record<string, any> = {};
+    
+    // Iterate over required fields
+    for (const field of requiredFields) {
+      const value = formData.get(field);
+      if (!value) {
+        return NextResponse.json({ error: `${field} is required` }, { status: 400 });
+      }
+      data[field] = value;
     }
 
-    // create chatbot
+    // Process optional fields
+    for (const field of optionalFields) {
+      const value = formData.get(field);
+      if (value) {
+        data[field] = value;
+      }
+    }
+
+    // Parse imagesUrl and videosUrl if present
+    const imagesArray = data.imagesUrl ? JSON.parse(data.imagesUrl) : [];
+    const videosArray = data.videosUrl ? JSON.parse(data.videosUrl) : [];
+
+    // Create chatbot
     const { error: updateError } = await supabase
       .from('chatbot')
       .insert([{
         configuration: {
-          route: routeName,
-          chatbot_instruction: systemInstruction,
-          bg_color: bgColor,
-          app_name: appName,
+          route: data.routeName,
+          chatbot_instruction: data.systemInstruction,
+          bg_color: data.bgColor || null,
+          app_name: data.appName || null,
         },
-        user_id: userId,
-      }])
+        user_id: data.userId,
+      }]);
 
     if (updateError) throw updateError;
 
-
     // CSV file handling
-    const fileContent = await file.text();
+    const fileContent = await (data.file as File).text();
     const records = parse(fileContent, { columns: true, skip_empty_lines: true }) as Record<string, string>[];
     const validatedRecords = records
-      .map(record => validateAndTransformRecord(record, routeName))
+      .map(record => validateAndTransformRecord(record, data.routeName, imagesArray, videosArray))
       .filter((record): record is PropertyRecord => record !== null);
 
-    const { data, error } = await supabase
+    const { data: propertyData, error } = await supabase
       .from('properties')
       .insert(validatedRecords);
-    
+
     if (error) throw error;
 
     return NextResponse.json({ 
       message: 'Upload successful', 
       count: validatedRecords.length,
-      route: routeName
+      route: data.routeName
     });
   } catch (error) {
     console.error('Error processing request:', error);
@@ -81,16 +83,25 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function validateAndTransformRecord(record: Record<string, string>, routeName: string): PropertyRecord | null {
+function validateAndTransformRecord(
+  record: Record<string, string>, 
+  routeName: string, 
+  imagesArray: string[], 
+  videosArray: string[]
+): PropertyRecord | null {
   try {
+    // Check if 'images' and 'videos' columns are present in the record
+    const existingImages = record.images ? JSON.parse(record.images) : [];
+    const existingVideos = record.videos ? JSON.parse(record.videos) : [];
+
     const transformedRecord: PropertyRecord = {
       route: routeName,
       meta: record.meta ? JSON.parse(record.meta) : null,
-      images: record.images ? JSON.parse(record.images) : null,
+      images: existingImages.length > 0 ? [...existingImages, ...imagesArray] : imagesArray,
       ratings: record.ratings ? JSON.parse(record.ratings) : null,
       features: record.features ? JSON.parse(record.features) : null,
       link: record.link || null,
-      videoUrl: record.videoUrl || null,
+      videos: existingVideos.length > 0 ? [...existingVideos, ...videosArray] : videosArray,
     };
 
     return transformedRecord;
@@ -99,7 +110,3 @@ function validateAndTransformRecord(record: Record<string, string>, routeName: s
     return null;
   }
 }
-
-// export const config = {
-//   api: { bodyParser: false },
-// };
