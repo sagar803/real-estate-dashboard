@@ -8,31 +8,31 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Upload, FileText, Image, Video, FileUp, ExternalLink, Loader2 } from "lucide-react"
+import { Upload, Loader2, ExternalLink, FileUp } from "lucide-react"
 import { useUser } from "@/lib/userContext"
 import { toast } from "sonner"
 import { Slider } from "@/components/ui/slider"
-import { Link1Icon } from "@radix-ui/react-icons"
 import { supabase } from "@/lib/supabaseClient"
-import { v4 as uuidv4 } from 'uuid';
-
+import { v4 as uuidv4 } from 'uuid'
+import FileUpload from "@/components/fileUpload"
+import CsvUpload from "@/components/csvUpload"
 
 const ColorPickerWithOpacity = React.memo(({ rgba, setRgba }) => {
-  const [color, setColor] = useState(() => rgbaToHex(rgba));
-  const [opacity, setOpacity] = useState(() => Math.round(rgba.a * 100));
+  const [color, setColor] = useState(() => rgbaToHex(rgba))
+  const [opacity, setOpacity] = useState(() => Math.round(rgba.a * 100))
 
   const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newColor = e.target.value;
-    setColor(newColor);
-    const [r, g, b] = hexToRgb(newColor);
-    setRgba({ r, g, b, a: rgba.a });
-  };
+    const newColor = e.target.value
+    setColor(newColor)
+    const [r, g, b] = hexToRgb(newColor)
+    setRgba({ r, g, b, a: rgba.a })
+  }
 
   const handleOpacityChange = useCallback((value: number[]) => {
-    const newOpacity = value[0] / 100;
-    setOpacity(value[0]);
-    setRgba(prev => ({ ...prev, a: newOpacity }));
-  }, [setRgba]);
+    const newOpacity = value[0] / 100
+    setOpacity(value[0])
+    setRgba(prev => ({ ...prev, a: newOpacity }))
+  }, [setRgba])
 
   return (
     <div className="space-y-2">
@@ -53,9 +53,7 @@ const ColorPickerWithOpacity = React.memo(({ rgba, setRgba }) => {
         RGBA: rgba({rgba.r}, {rgba.g}, {rgba.b}, {rgba.a.toFixed(2)})
       </p>
       <div className="space-y-2">
-        <Label htmlFor="opacity">
-          Opacity: {opacity}%
-        </Label>
+        <Label htmlFor="opacity">Opacity: {opacity}%</Label>
         <Slider
           id="opacity"
           min={0}
@@ -66,154 +64,139 @@ const ColorPickerWithOpacity = React.memo(({ rgba, setRgba }) => {
         />
       </div>
     </div>
-  );
-});
+  )
+})
 
-ColorPickerWithOpacity.displayName = 'ColorPickerWithOpacity';
+ColorPickerWithOpacity.displayName = 'ColorPickerWithOpacity'
 
 function rgbaToHex({ r, g, b }: { r: number, g: number, b: number }): string {
   return '#' + [r, g, b].map(x => {
-    const hex = x.toString(16);
-    return hex.length === 1 ? '0' + hex : hex;
-  }).join('');
+    const hex = x.toString(16)
+    return hex.length === 1 ? '0' + hex : hex
+  }).join('')
 }
 
 function hexToRgb(hex: string): [number, number, number] {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
   return result 
-    ? [
-        parseInt(result[1], 16),
-        parseInt(result[2], 16),
-        parseInt(result[3], 16)
-      ]
-    : [0, 0, 0];
+    ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)]
+    : [0, 0, 0]
+}
+
+type FileItem = {
+  file: File
+  preview: string
+  description: string
+  propertyIndex: number
+}
+
+type UploadedFile = {
+  url: string
+  description: string
+  propertyIndex: number
+  fileType: string
 }
 
 export default function Component() {
   const { user } = useUser()
-  const [isLoading, setIsLoading]  = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [csvFile, setCsvFile] = useState<File | null>(null)
-  const [imageFiles, setImageFiles] = useState<FileList | null>(null)
-  const [videoFiles, setVideoFiles] = useState<FileList | null>(null)
-  const [pdfFiles, setPdfFiles] = useState<FileList | null>(null)
+  const [files, setFiles] = useState<FileItem[]>([])
   const [systemInstruction, setSystemInstruction] = useState("")
   const [routeName, setRouteName] = useState("")
   const [appName, setAppName] = useState('')
-  const [rgba, setRgba] = useState({ r: 255, g: 209, b: 209, a: 1 });
+  const [rgba, setRgba] = useState({ r: 255, g: 209, b: 209, a: 1 })
   const [chatbotUrl, setChatbotUrl] = useState('')
 
-  const uploadFiles = async (files, bucket) => {
-    if(!files || !bucket) return []
-    const uploadedUrls = [];
+  const uploadFiles = async () => {
+    const uploadedFiles: UploadedFile[] = []
 
-    for (const file of files) {
-      const uniqueId = uuidv4();
-      const filePath = `${uniqueId}_${file.name}`;
-      const { error } = await supabase.storage.from(bucket).upload(filePath, file);
+    for (const fileItem of files) {
+      const { file, description, propertyIndex } = fileItem
+
+      const bucket = file.type.startsWith('image/') ? 'images' : 
+                     file.type.startsWith('video/') ? 'videos' : 
+                     'documents'
+
+      const uniqueId = uuidv4()
+      const filePath = `${uniqueId}_${file.name}`
+
+      const { error } = await supabase.storage.from(bucket).upload(filePath, file)
 
       if (error) {
-        console.error(`Error uploading ${file.name}:`, error);
-        continue;
+        console.error(`Error uploading ${file.name}:`, error)
+        toast.error(`Error uploading ${file.name}`)
+        continue
       }
 
-      const publicUrl = supabase.storage.from(bucket).getPublicUrl(filePath).data.publicUrl;
-      uploadedUrls.push(publicUrl);
+      const publicUrl = supabase.storage.from(bucket).getPublicUrl(filePath).data.publicUrl
+
+      uploadedFiles.push({
+        url: publicUrl,
+        description,
+        propertyIndex,
+        fileType: bucket
+      })
     }
-    return uploadedUrls;
-  };
+
+    return uploadedFiles
+  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    if (!csvFile || !systemInstruction || !routeName) {
-      toast.error("Please provide all required inputs");
-      return;
+
+    if (!csvFile || !systemInstruction || !routeName || !appName) {
+      toast.error("Please provide all required inputs")
+      return
     }
-    setIsLoading(true)    
+
+    setIsLoading(true)
     try {
       const { data: existingRoute, error: routeError } = await supabase
         .from('chatbot')
         .select('configuration')
-        .filter('configuration->>route', 'eq', routeName.toLowerCase())        
+        .filter('configuration->>route', 'eq', routeName.toLowerCase())
 
-      if (existingRoute && existingRoute.length > 0) {
-        toast.error("Route already exists. Please choose a unique route name.");
-        return;
+      if (existingRoute?.length > 0) {
+        toast.error("Route already exists. Please choose a unique route name.")
+        return
       }
-      const uploadedImageUrls = await uploadFiles(imageFiles, 'images');
-      const uploadedVideoUrls = await uploadFiles(videoFiles, 'videos');
 
-      const result = await uploadData(csvFile, uploadedImageUrls, uploadedVideoUrls)
+      const uploadedFiles = await uploadFiles()
+
+      const result = await uploadData(csvFile, uploadedFiles)
       setChatbotUrl("https://saaaas.vercel.app/"+result.route)
       toast(<div><p className="font-bold">{"Chatbot successfully created"}</p><a href={"https://saaaas.vercel.app/"+result.route} className="flex gap-1 items-center" target="_blank" rel="noopener noreferrer">{"https://saaaas.vercel.app/"+result.route}<ExternalLink strokeWidth={1} size={20}/></a></div> , {duration: 8000})
       console.log('Upload result:', result)
     } catch (error) {
       toast.error("Failed to create chatbot")
       console.error('Upload failed:', error)
-    }
-    finally{
+    } finally {
       setIsLoading(false)
     }
   }
-  
-  const uploadData = useCallback(async (file, uploadedImageUrls, uploadedVideoUrls ) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('userId', user?.id);
-    formData.append('systemInstruction', systemInstruction);
-    formData.append('routeName', routeName.toLowerCase());
-    formData.append('appName', appName);
-    formData.append('imagesUrl', JSON.stringify(uploadedImageUrls));
-    formData.append('videosUrl', JSON.stringify(uploadedVideoUrls));
-    formData.append('bgColor', `rgba(${rgba.r},${rgba.g},${rgba.b},${rgba.a})`);
+
+  const uploadData = useCallback(async (file: File, uploadedFiles: UploadedFile[]) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('userId', user?.id || '')
+    formData.append('systemInstruction', systemInstruction)
+    formData.append('routeName', routeName.toLowerCase())
+    formData.append('appName', appName)
+    formData.append('uploadedFiles', JSON.stringify(uploadedFiles))
+    formData.append('bgColor', `rgba(${rgba.r},${rgba.g},${rgba.b},${rgba.a})`)
 
     const response = await fetch('/api/upload/data', {
       method: 'POST',
       body: formData,
-    });
-  
-    if (!response.ok) throw new Error('Upload failed');  
-    return response.json();
-  }, [user?.id, systemInstruction, routeName, appName, rgba]);
+    })
 
-  const FileUploadSection = useMemo(() => ({ id, label, accept, icon: Icon, files, setFiles, multiple = false }) => (
-    <div className="space-y-2">
-      <Label htmlFor={id} className="flex items-center gap-2">
-        <Icon className="w-4 h-4" />
-        {label}
-      </Label>
-      <div className="flex items-center gap-2">
-        <Input
-          id={id}
-          type="file"
-          accept={accept}
-          multiple={multiple}
-          onChange={(e) => {
-            if (multiple) {
-              setFiles(e.target.files);
-            } else {
-              setFiles(e.target.files ? e.target.files[0] : null);
-            }
-          }}
-          className="hidden"
-        />
-        <Label
-          htmlFor={id}
-          className={` flex-1 py-8 border-2 border-dashed rounded-md cursor-pointer hover:bg-muted transition-colors duration-200 flex flex-col items-center justify-center text-muted-foreground ${((multiple && files && files.length > 0) || (!multiple && files)) ? "border-blue-500 bg-blue-100 dark:bg-blue-950" : ''}`}
-        >
-          <FileUp className="w-8 h-8 mb-2" />
-          <span>Click to upload</span>
-          <span className="text-xs">
-            {files 
-              ? (multiple ? `${files.length} file(s) selected` : '1 file selected') 
-              : 'No file selected'}
-          </span>
-        </Label>
-      </div>
-    </div>
-  ), []);
+    if (!response.ok) throw new Error('Upload failed')
 
-  const isSubmitDisabled = !(systemInstruction && routeName && csvFile && appName && !isLoading);
+    return response.json()
+  }, [user?.id, systemInstruction, routeName, appName, rgba])
 
+  const isSubmitDisabled = !(systemInstruction && routeName && csvFile && appName && !isLoading)
 
   return (
     <div className="container mx-auto p-4">
@@ -224,48 +207,24 @@ export default function Component() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            <Tabs defaultValue="files" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="files">File Upload</TabsTrigger>
-                <TabsTrigger value="instructions">Instructions</TabsTrigger>
+            <Tabs defaultValue="appearance" className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="appearance">Appearance</TabsTrigger>
+                <TabsTrigger value="instructions">Instructions</TabsTrigger>
+                <TabsTrigger value="csv">CSV</TabsTrigger>
+                <TabsTrigger value="files">File Upload</TabsTrigger>
               </TabsList>
-              <TabsContent value="files" className="mt-4 grid md:grid-cols-2 gap-4">
-                <FileUploadSection
-                  id="csv-upload"
-                  label="CSV Files"
-                  accept=".csv"
-                  icon={FileText}
-                  files={csvFile}
-                  setFiles={setCsvFile}
-                />
-                <FileUploadSection
-                  id="image-upload"
-                  label="Images"
-                  accept="image/*"
-                  icon={Image}
-                  files={imageFiles}
-                  setFiles={setImageFiles}
-                  multiple={true}
-                />
-                <FileUploadSection
-                  id="video-upload"
-                  label="Videos"
-                  accept="video/*"
-                  icon={Video}
-                  files={videoFiles}
-                  setFiles={setVideoFiles}
-                  multiple={true}
-                />
-                <FileUploadSection
-                  id="pdf-upload"
-                  label="PDF Files"
-                  accept=".pdf"
-                  icon={FileUp}
-                  files={pdfFiles}
-                  setFiles={setPdfFiles}
-                  multiple={true}
-                />
+              <TabsContent value="appearance" className="mt-4 space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="app-name">App Name</Label>
+                  <Input 
+                    id="app-name" 
+                    placeholder="Enter app name"
+                    value={appName}
+                    onChange={(e) => setAppName(e.target.value)}
+                  />
+                </div>
+                <ColorPickerWithOpacity rgba={rgba} setRgba={setRgba} />
               </TabsContent>
               <TabsContent value="instructions" className="space-y-4 mt-4">
                 <div className="space-y-2">
@@ -287,41 +246,29 @@ export default function Component() {
                   />
                 </div>
               </TabsContent>
-              <TabsContent value="appearance" className="mt-4 space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="app-name">App Name</Label>
-                  <Input 
-                    id="app-name" 
-                    placeholder="Enter app name"
-                    value={appName}
-                    onChange={(e) => setAppName(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Background Color</Label>
-                  <ColorPickerWithOpacity
-                    rgba={rgba}
-                    setRgba={setRgba}
-                  />
-                </div>
-            </TabsContent>
+              <TabsContent value="csv" className="mt-4 space-y-6">
+                <CsvUpload csvFile={csvFile} setCsvFile={setCsvFile} />
+              </TabsContent>
+              <TabsContent value="files" className="mt-4">
+                <FileUpload files={files} setFiles={setFiles} />
+              </TabsContent>
             </Tabs>
             <Button 
               type="submit" 
               className="w-full"
               disabled={isSubmitDisabled}
             > 
-             {isLoading ? (
-              <div className="flex items-center">
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {'Processing...'}
-              </div>
+              {isLoading ? (
+                <div className="flex items-center">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {'Processing...'}
+                </div>
               ) : (
-              <>
-                <Upload className="w-4 h-4 mr-2" />
-                {"Generate Chatbot"}
-              </>
-            )}
+                <>
+                  <Upload className="w-4 h-4 mr-2" />
+                  {"Generate Chatbot"}
+                </>
+              )}
             </Button>
           </form>
         </CardContent>

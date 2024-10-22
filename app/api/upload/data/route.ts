@@ -6,12 +6,19 @@ interface PropertyRecord {
   id?: number;
   route: string | null;
   meta: Record<string, any> | null;
-  images: string[] | null;
+  images: Array<{ url: string, description: string }> | null;
   ratings: Record<string, number> | null;
   features: string[] | null;
   link: string | null;
-  videos: string[] | null;
+  videos: Array<{ url: string, description: string }> | null;
 }
+
+type UploadedFile = {
+  url: string;
+  description: string;
+  propertyIndex: number; // 1-indexed
+  fileType: string;
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,16 +29,11 @@ export async function POST(request: NextRequest) {
     const file = formData.get('file') as File | null;
     const bgColor = formData.get('bgColor') as string;
     const appName = formData.get('appName') as string;
-    const imagesArray = formData.get('imagesUrl') as string | null;
-    const videosArray = formData.get('videosUrl') as string | null;
-    
-    let parsedImagesArray: string[] = [];
-    let parsedVideosArray: string[] = [];
-    
-    if (imagesArray) parsedImagesArray = JSON.parse(imagesArray) as string[];
-    if (videosArray) parsedVideosArray = JSON.parse(videosArray) as string[];
-  
-    
+
+    const uploadedFiles = formData.get('uploadedFiles') as string;
+
+    let parsedFiles: UploadedFile[] = [];
+    if (uploadedFiles) parsedFiles = JSON.parse(uploadedFiles) as UploadedFile[];
 
     if (!file) return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
     if (!userId) return NextResponse.json({ error: 'Builder ID is required' }, { status: 400 });
@@ -53,11 +55,23 @@ export async function POST(request: NextRequest) {
 
     if (updateError) throw updateError;
 
+    const filesByPropertyIndex: Record<number, UploadedFile[]> = {};
+    parsedFiles.forEach(file => {
+      const index = file.propertyIndex - 1;
+      if (!filesByPropertyIndex[index]) {
+        filesByPropertyIndex[index] = [];
+      }
+      filesByPropertyIndex[index].push(file);
+    });
+    
     // CSV file handling
     const fileContent = await file.text();
     const records = parse(fileContent, { columns: true, skip_empty_lines: true }) as Record<string, string>[];
+
     const validatedRecords = records
-      .map(record => validateAndTransformRecord(record, routeName, parsedImagesArray, parsedVideosArray))
+      .map((record, index) => 
+        validateAndTransformRecord(record, routeName, filesByPropertyIndex[index] || [])
+      )
       .filter((record): record is PropertyRecord => record !== null);
 
     const { data, error } = await supabase
@@ -77,19 +91,32 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function validateAndTransformRecord(record: Record<string, string>, routeName: string, imagesArray: string[], videosArray: string[]): PropertyRecord | null {
+function validateAndTransformRecord(
+  record: Record<string, string>, 
+  routeName: string, 
+  uploadedFiles: UploadedFile[] = []
+): PropertyRecord | null {
   try {
     const existingImages = record.images ? JSON.parse(record.images) : [];
     const existingVideos = record.videos ? JSON.parse(record.videos) : [];
 
+    // Filter and group uploaded files by type
+    const images = uploadedFiles
+      .filter(file => file.fileType === 'images')
+      .map(file => ({ url: file.url, description: file.description }));
+
+    const videos = uploadedFiles
+      .filter(file => file.fileType === 'videos')
+      .map(file => ({ url: file.url, description: file.description }));
+
     const transformedRecord: PropertyRecord = {
       route: routeName,
       meta: record.meta ? JSON.parse(record.meta) : null,
-      images: [...existingImages, ...imagesArray],
+      images: [...existingImages, ...images],
       ratings: record.ratings ? JSON.parse(record.ratings) : null,
       features: record.features ? JSON.parse(record.features) : null,
       link: record.link || null,
-      videos: [...existingVideos, ...videosArray],
+      videos: [...existingVideos, ...videos],
     };
 
     return transformedRecord;
