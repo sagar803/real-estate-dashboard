@@ -1,4 +1,3 @@
-// pages/api/transcribe.js
 import fs from 'fs';
 import path from 'path';
 import OpenAI from 'openai';
@@ -8,12 +7,7 @@ const openai = new OpenAI({
   apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
 });
 
-// export const config = {
-//   api: {
-//     bodyParser: false,
-//   },
-// };
-
+export const runtime = 'edge'; // Use 'edge' if needed for edge functions
 
 export async function POST(req: NextRequest) {
   try {
@@ -32,7 +26,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No file uploaded.' }, { status: 400 });
     }
 
-    console.log(file)
     // Write the uploaded file to the local filesystem
     const fileBuffer = Buffer.from(await file.arrayBuffer());
     const filePath = path.join(process.cwd(), 'uploads', 'output.mp3');
@@ -43,7 +36,7 @@ export async function POST(req: NextRequest) {
       file: fs.createReadStream(filePath),
       model: 'whisper-1',
       response_format: 'verbose_json',
-      timestamp_granularities: ["segment"],
+      timestamp_granularities: ['segment'],
     });
 
     const simplifiedSegments = transcription.segments?.map(
@@ -55,7 +48,6 @@ export async function POST(req: NextRequest) {
 
     // Clean up the uploaded file
     fs.unlinkSync(filePath);
-    console.log(transcription)
 
     // Return the transcription result
     return NextResponse.json({ transcription: simplifiedSegments });
