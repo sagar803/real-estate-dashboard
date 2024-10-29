@@ -220,6 +220,9 @@ export default function Component() {
         );
   
         //sending video frames to get video description
+        console.log("sending video frames to get video description")
+        console.log(frames.length)
+        console.log(frames)
         const videoDescription = await sendFramesToAPI(frames);
         console.log("video description ",videoDescription);
 
