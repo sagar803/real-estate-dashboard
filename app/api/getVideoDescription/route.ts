@@ -6,13 +6,13 @@ const openai = new OpenAI({
 });
 
 // Configure the route for body size limit
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '50mb', // Increase limit to handle large frames
-    },
-  },
-};
+// export const config = {
+//   api: {
+//     bodyParser: {
+//       sizeLimit: '50mb', // Increase limit to handle large frames
+//     },
+//   },
+// };
 
 // Handle POST requests for the API
 export async function POST(req: NextRequest) {
