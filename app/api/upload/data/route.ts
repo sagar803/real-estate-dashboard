@@ -13,12 +13,23 @@ interface PropertyRecord {
   videos: Array<{ url: string, description: string }> | null;
 }
 
-type UploadedFile = {
-  url: string;
-  description: string;
-  propertyIndex: number; // 1-indexed
-  fileType: string;
-};
+type VideoFile = {
+  url: string
+  description: string
+  propertyIndex: number
+  fileType: string
+  aiDescription: string
+  transcript: []  
+}
+
+type ImageFile = {
+  url: string
+  description: string
+  propertyIndex: number
+  fileType: string
+}
+
+type UploadedFile = ImageFile | VideoFile
 
 export async function POST(request: NextRequest) {
   try {
@@ -74,6 +85,7 @@ export async function POST(request: NextRequest) {
       )
       .filter((record): record is PropertyRecord => record !== null);
 
+      console.log(validatedRecords)
     const { data, error } = await supabase
       .from('properties')
       .insert(validatedRecords);
@@ -107,7 +119,7 @@ function validateAndTransformRecord(
 
     const videos = uploadedFiles
       .filter(file => file.fileType === 'videos')
-      .map(file => ({ url: file.url, description: file.description }));
+      .map(file => ({ url: file.url, description: file.description, transcript: file.transcript, aiDescription: file.aiDescription }));
 
     const transformedRecord: PropertyRecord = {
       route: routeName,

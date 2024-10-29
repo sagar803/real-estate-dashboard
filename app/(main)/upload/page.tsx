@@ -10,12 +10,16 @@ import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Upload, Loader2, ExternalLink, FileUp } from "lucide-react"
 import { useUser } from "@/lib/userContext"
+import { transcribeAudio } from "@/lib/transcirpt"
 import { toast } from "sonner"
 import { Slider } from "@/components/ui/slider"
 import { supabase } from "@/lib/supabaseClient"
 import { v4 as uuidv4 } from 'uuid'
 import FileUpload from "@/components/fileUpload"
 import CsvUpload from "@/components/csvUpload"
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { fetchFile } from '@ffmpeg/util';
+import { VideoToFrames, VideoToFramesMethod } from "@/components/VideoToFrames"
 
 const ColorPickerWithOpacity = React.memo(({ rgba, setRgba }) => {
   const [color, setColor] = useState(() => rgbaToHex(rgba))
@@ -90,12 +94,23 @@ type FileItem = {
   propertyIndex: number
 }
 
-type UploadedFile = {
+type VideoFile = {
+  url: string
+  description: string
+  propertyIndex: number
+  fileType: string
+  aiDescription: string
+  transcript: []  
+}
+
+type ImageFile = {
   url: string
   description: string
   propertyIndex: number
   fileType: string
 }
+
+type UploadedFile = ImageFile | VideoFile
 
 export default function Component() {
   const { user } = useUser()
@@ -107,20 +122,82 @@ export default function Component() {
   const [appName, setAppName] = useState('')
   const [rgba, setRgba] = useState({ r: 255, g: 209, b: 209, a: 1 })
   const [chatbotUrl, setChatbotUrl] = useState('')
+  const [isFFmpegLoaded, setIsFFmpegLoaded] = useState(false);
+
+  const ffmpeg = new FFmpeg({ log: true });
+
+  const sendFramesToAPI = async (base64Frames) => {
+    try {
+      const response = await fetch('/api/getVideoDescription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ base64Frames }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get video description');
+      }
+
+      const data = await response.json();
+      console.log(data);
+    } catch (error) {
+      console.error('Error sending frames to API:', error);
+    }
+  };
+
+  const getTranscript = async (file) => {
+    if (!file) {
+      console.error('No file provided');
+      return null;
+    }
+  
+    let transcript = null;
+    try {
+      await ffmpeg.load();
+  
+      const videoData = await fetchFile(file);
+      await ffmpeg.writeFile('input.mp4', videoData);  
+      await ffmpeg.exec(['-i', 'input.mp4', 'output.mp3']);  
+      const data = await ffmpeg.readFile('output.mp3');
+      const mp3Blob = new Blob([data.buffer], { type: 'audio/mpeg' });
+  
+      // Preparing form data for transcription
+      const formData = new FormData();
+      formData.append('file', mp3Blob, 'output.mp3');
+  
+      // Sending audio for transcription
+      const response = await fetch('/api/transcribe', {
+        method: 'POST',
+        body: formData,
+      });
+  
+      if (response.ok) {
+        const result = await response.json();
+        transcript = result.transcription;
+      } else {
+        console.error('Failed to transcribe:', response.status, response.statusText);
+      }
+    } catch (error) {
+      console.error('Error during transcription:', error);
+    }
+  
+    return transcript;
+  };
+  
 
   const uploadFiles = async () => {
     const uploadedFiles: UploadedFile[] = []
 
     for (const fileItem of files) {
+      //Uploading file to db
       const { file, description, propertyIndex } = fileItem
-
       const bucket = file.type.startsWith('image/') ? 'images' : 
                      file.type.startsWith('video/') ? 'videos' : 
                      'documents'
-
       const uniqueId = uuidv4()
       const filePath = `${uniqueId}_${file.name}`
-
       const { error } = await supabase.storage.from(bucket).upload(filePath, file)
 
       if (error) {
@@ -131,12 +208,38 @@ export default function Component() {
 
       const publicUrl = supabase.storage.from(bucket).getPublicUrl(filePath).data.publicUrl
 
-      uploadedFiles.push({
-        url: publicUrl,
-        description,
-        propertyIndex,
-        fileType: bucket
-      })
+      if(bucket == 'videos'){
+        const transcript = await getTranscript(file);
+        console.log("transcription ",transcript);
+        //Extracting video frames
+        const fileUrl = URL.createObjectURL(file);
+        const frames = await VideoToFrames.getFrames(
+          fileUrl,
+          30,
+          VideoToFramesMethod.totalFrames
+        );
+  
+        //sending video frames to get video description
+        const videoDescription = await sendFramesToAPI(frames);
+        console.log("video description ",videoDescription);
+
+        uploadedFiles.push({
+          url: publicUrl,
+          description,
+          aiDescription: videoDescription,
+          propertyIndex,
+          fileType: bucket,
+          transcript
+        })
+
+      } else {
+        uploadedFiles.push({
+          url: publicUrl,
+          description,
+          propertyIndex,
+          fileType: bucket,
+        }) 
+      }
     }
 
     return uploadedFiles
