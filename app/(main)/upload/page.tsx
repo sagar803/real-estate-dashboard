@@ -141,7 +141,7 @@ export default function Component() {
       }
 
       const data = await response.json();
-      console.log(data);
+      return data.description;
     } catch (error) {
       console.error('Error sending frames to API:', error);
     }
@@ -185,7 +185,7 @@ export default function Component() {
   
     return transcript;
   };
-  
+
 
   const uploadFiles = async () => {
     const uploadedFiles: UploadedFile[] = []
@@ -241,6 +241,8 @@ export default function Component() {
         }) 
       }
     }
+
+    console.log(uploadFiles)
 
     return uploadedFiles
   }

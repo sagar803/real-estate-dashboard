@@ -43,8 +43,10 @@ export async function POST(request: NextRequest) {
 
     const uploadedFiles = formData.get('uploadedFiles') as string;
 
+    
     let parsedFiles: UploadedFile[] = [];
     if (uploadedFiles) parsedFiles = JSON.parse(uploadedFiles) as UploadedFile[];
+    console.log(parsedFiles)
 
     if (!file) return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
     if (!userId) return NextResponse.json({ error: 'Builder ID is required' }, { status: 400 });
