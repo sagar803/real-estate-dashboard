@@ -21,6 +21,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "lib/userContext.tsx", "components/loadingSkleton.jsx", "app/(temp)/videoToFrames/page.jsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "lib/userContext.tsx", "components/loadingSkleton.jsx", "(temp)/videoToFrames/page.jsx"],
   "exclude": ["node_modules"]
 }
