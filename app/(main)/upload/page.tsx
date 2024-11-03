@@ -20,6 +20,7 @@ import CsvUpload from "@/components/csvUpload"
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile } from '@ffmpeg/util';
 import { VideoToFrames, VideoToFramesMethod } from "@/components/VideoToFrames"
+import OpenAI from "openai"
 
 const ColorPickerWithOpacity = React.memo(({ rgba, setRgba }) => {
   const [color, setColor] = useState(() => rgbaToHex(rgba))
@@ -123,10 +124,10 @@ export default function Component() {
   const [rgba, setRgba] = useState({ r: 255, g: 209, b: 209, a: 1 })
   const [chatbotUrl, setChatbotUrl] = useState('')
   const [isFFmpegLoaded, setIsFFmpegLoaded] = useState(false);
-
   const ffmpeg = new FFmpeg({ log: true });
+  // const openai = new OpenAI({ apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY, dangerouslyAllowBrowser: true });
 
-  const sendFramesToAPI = async (base64Frames) => {
+  const getVideoDescription = async (base64Frames) => {
     try {
       const response = await fetch('/api/getVideoDescription', {
         method: 'POST',
@@ -146,6 +147,38 @@ export default function Component() {
       console.error('Error sending frames to API:', error);
     }
   };
+
+  // const getVideoDescription = async (base64Frames) => {
+  //   const messages = [
+  //     {
+  //       role: 'user',
+  //       content: [
+  //           "You are analyzing a series of video frames captured at 1-second intervals. Your task is to generate a concise description of the video content, based on the visual details observed in these frames.",
+  //           "Please consider the following guidelines:",
+  //           "- Include relevant details about the background, foreground, and any visible interactions between elements.",
+  //           "- If there are any visible texts, signs, or symbols, include them in the description.",
+  //           "- Mention any changes or transitions that occur between frames (e.g., movement, shifts in focus, or changes in scenery).",
+  //           "- Ensure the description is structured as a single cohesive paragraph, maintaining the flow and order of the frames.",
+
+  //         ...base64Frames.map((frame) => ({
+  //           image: frame,
+  //           resize: 768,
+  //         })),
+  //       ],
+  //     },
+  //   ];
+
+  //   const response = await openai.chat.completions.create({
+  //       model: "gpt-4o",
+  //       messages: messages,
+  //       max_tokens: 2000,
+  //     });
+      
+  //   // Get the response from OpenAI
+  //   console.log(response.choices[0]?.message?.content)
+  //   const description = response.choices[0]?.message?.content;
+  //   return description;
+  // }
 
   const getTranscript = async (file) => {
     if (!file) {
@@ -213,17 +246,13 @@ export default function Component() {
         console.log("transcription ",transcript);
         //Extracting video frames
         const fileUrl = URL.createObjectURL(file);
-        const frames = await VideoToFrames.getFrames(
-          fileUrl,
-          30,
-          VideoToFramesMethod.totalFrames
-        );
+        const frames = await VideoToFrames.getFrames(fileUrl, 10, VideoToFramesMethod.totalFrames);
   
         //sending video frames to get video description
         console.log("sending video frames to get video description")
         console.log(frames.length)
         console.log(frames)
-        const videoDescription = await sendFramesToAPI(frames);
+        const videoDescription = await getVideoDescription(frames);
         console.log("video description ",videoDescription);
 
         uploadedFiles.push({
