@@ -47,7 +47,6 @@ export async function POST(request: NextRequest) {
     
     let parsedFiles: UploadedFile[] = [];
     if (uploadedFiles) parsedFiles = JSON.parse(uploadedFiles) as UploadedFile[];
-    console.log(parsedFiles)
 
     if (!file) return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
     if (!userId) return NextResponse.json({ error: 'Builder ID is required' }, { status: 400 });
@@ -88,7 +87,6 @@ export async function POST(request: NextRequest) {
       )
       .filter((record): record is PropertyRecord => record !== null);
 
-      console.log(validatedRecords)
     const { data, error } = await supabase
       .from('properties')
       .insert(validatedRecords);

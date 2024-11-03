@@ -1,4 +1,5 @@
 //@ts-nocheck
+//https://codesandbox.io/p/sandbox/extract-frames-from-video-cts1w?file=%2Fsrc%2FApp.js
 export enum VideoToFramesMethod {
     fps,
     totalFrames
@@ -67,14 +68,27 @@ export enum VideoToFramesMethod {
       );
     }
   
+    // private static storeFrame(
+    //   video: HTMLVideoElement,
+    //   context: CanvasRenderingContext2D,
+    //   canvas: HTMLCanvasElement,
+    //   resolve: (frame: string) => void
+    // ) {
+    //   context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+    //   const base64Data = canvas.toDataURL().replace(/^data:image\/png;base64,/, '');
+    //   resolve(base64Data);
+    // }
     private static storeFrame(
       video: HTMLVideoElement,
       context: CanvasRenderingContext2D,
       canvas: HTMLCanvasElement,
-      resolve: (frame: string) => void
+      resolve: (frame: string) => void,
+      quality: number = 0.7 // Default quality (70%)
     ) {
       context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
-      const base64Data = canvas.toDataURL().replace(/^data:image\/png;base64,/, '');
+      const base64Data = canvas
+        .toDataURL("image/jpeg", quality) // Use JPEG format with specified quality
+        .replace(/^data:image\/jpeg;base64,/, '');
       resolve(base64Data);
     }
   }
