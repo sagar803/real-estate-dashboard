@@ -154,26 +154,28 @@ export default function Component() {
       {
         role: 'user',
         content: [
-            `You are analyzing a series of video frames captured at ${interval}-second intervals. Your task is to generate a concise description of the video content, based on the visual details observed in these frames.`,
-            "Please consider the following guidelines:",
-            "- Include relevant details about the background, foreground, and any visible interactions between elements.",
-            "- If there are any visible texts, signs, or symbols, include them in the description.",
-            "- Mention any changes or transitions that occur between frames (e.g., movement, shifts in focus, or changes in scenery).",
-            "- Ensure the description is structured as a single cohesive paragraph, maintaining the flow and order of the frames.",
-            "- It is very for me that the returned description is an array of objects with the following properties i.e time(seconds in number) and text(description of frame in string format)",
-            `- IMPORTANT: Your response must be in valid JSON format with the following structure:
-                      [{
-                        "time": "seconds in number",
-                        "text": "description of frame in string format"
-                      }, 
-                        {...}
-                      ]
-              
-              `,
-
+          `You are analyzing a series of video frames captured at ${interval}-second intervals. Based on visual observations in these frames, your goal is to create a concise, cohesive description of the video content.`,
+          "Please adhere to the following guidelines:",
+          "- Include relevant details about the background, foreground, and any interactions between visible elements within each frame.",
+          "- Note any readable text, signs, or symbols present, and include them in the description.",
+          "- Describe changes or transitions occurring between frames, such as movements, shifts in focus, or changes in scenery.",
+          "- Structure the description as a single, flowing paragraph that maintains the sequence and continuity of the observed frames.",
+          "- Return the description as an array of objects, each containing the following properties: `time` (seconds as a number) and `text` (description of the frame as a string).",
+          "- IMPORTANT: Ensure your response is in valid JSON format with the following structure:",
+          `[
+              {
+                  "time": seconds as a number,
+                  "text": "description of frame in string format"
+              },
+              {
+                  ...
+              }
+          ]`,
+        
+          // Process each base64-encoded frame for resizing and analysis
           ...base64Frames.map((frame) => ({
-            image: frame,
-            resize: 768,
+              image: frame,
+              resize: 768,
           })),
         ],
       },
