@@ -46,7 +46,7 @@ export default function Home() {
                   Sign In
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px] bg-white rounded-md">
+              <DialogContent className="sm:max-w-[425px] rounded-md">
                 <DialogTitle className='hidden'>Sign Up</DialogTitle>
                 <SignUpForm />
               </DialogContent>

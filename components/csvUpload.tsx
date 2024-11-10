@@ -4,6 +4,7 @@ import { FileUp } from 'lucide-react';
 import React, { useState } from 'react';
 import { Label } from './ui/label';
 import { Input } from './ui/input';
+import PropertySchemaDialog from './property-schema-dialog';
 
 const CsvUpload: React.FC = ({csvFile, setCsvFile}) => {
 
@@ -14,10 +15,13 @@ const CsvUpload: React.FC = ({csvFile, setCsvFile}) => {
 
   return (
       <div className="space-y-2">
+        <div className='flex justify-between'>
         <Label className="flex items-center gap-2">
           <FileUp className="w-4 h-4" />
           {"PDF Files"}
         </Label>
+        <PropertySchemaDialog />
+        </div>
         <div className="flex items-center gap-2">
           <Input
             id="pdf-upload"
