@@ -14,13 +14,13 @@ const CsvUpload: React.FC = ({csvFile, setCsvFile}) => {
   };
 
   return (
-      <div className="space-y-2">
+      <div className="my-2">
         <div className='flex justify-between'>
-        <Label className="flex items-center gap-2">
-          <FileUp className="w-4 h-4" />
-          {"PDF Files"}
-        </Label>
-        <PropertySchemaDialog />
+          <Label className="flex items-center gap-2 h-10">
+            <FileUp className="w-4 h-4" />
+            {"PDF Files"}
+          </Label>
+          <PropertySchemaDialog />
         </div>
         <div className="flex items-center gap-2">
           <Input

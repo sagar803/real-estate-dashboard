@@ -2,7 +2,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Plus, X, File, Image, Video, FileUp } from 'lucide-react'
+import { Plus, X, File, Image, Video, FileUp, ImageIcon, VideoIcon } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -51,8 +51,14 @@ export default function FileUpload({files, setFiles}) {
   }
 
   return (
-    <div className="container mx-auto p-4">
-        <div className="flex items-center my-4">
+    <div className="my-2">
+        <Label className="flex items-center gap-2 h-10">
+          <ImageIcon className="w-4 h-4" />
+          {"Images"}
+          <VideoIcon className="w-4 h-4" />
+          {"Videos"}
+        </Label>
+        <div className="flex items-center gap-2">
             <Input
                 type="file"
                 ref={fileInputRef}
@@ -62,7 +68,7 @@ export default function FileUpload({files, setFiles}) {
                 className="hidden"
             />
             <Label 
-                className={` flex-1 py-8 border-2 border-dashed rounded-md cursor-pointer flex flex-col items-center justify-center text-muted-foreground border-blue-600 bg-blue-500"`}
+                className={` flex-1 py-8 border-2 border-dashed rounded-md cursor-pointer flex flex-col items-center justify-center text-muted-foreground   border-blue-500 bg-blue-100 dark:bg-blue-950"`}
                 onClick={() => fileInputRef.current?.click()}
             >
                 <FileUp className="w-8 h-8 mb-2" />

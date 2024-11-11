@@ -8,7 +8,7 @@ const PropertySchemaDialog: React.FC = () => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" aria-label="Info" className="flex items-center space-x-2">
+        <Button variant="ghost" aria-label="Info" className="flex items-center space-x-2 p-0">
           <Info className="h-5 w-5 text-blue-500" />
           <span className="text-sm font-medium">Schema Info</span>
         </Button>
