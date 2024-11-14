@@ -74,7 +74,7 @@ export default function FileUpload({files, setFiles}) {
                 <FileUp className="w-8 h-8 mb-2" />
                 <span>Click to select</span>
                 <span className="text-xs">
-                    {files 
+                    {files.length !== 0 
                     ? `${files.length} file(s) selected`
                     : 'No file selected'}
                 </span>

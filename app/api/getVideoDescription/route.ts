@@ -54,7 +54,6 @@ export async function POST(req: NextRequest) {
       });
       
     // Get the response from OpenAI
-    console.log(response.choices[0]?.message?.content)
     const description = response.choices[0]?.message?.content;
 
     if (!description) {

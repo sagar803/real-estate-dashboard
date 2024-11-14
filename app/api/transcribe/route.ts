@@ -32,7 +32,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No file uploaded.' }, { status: 400 });
     }
 
-    console.log(file)
     // Write the uploaded file to the local filesystem
     const fileBuffer = Buffer.from(await file.arrayBuffer());
     const filePath = path.join(process.cwd(), 'uploads', 'output.mp3');
@@ -55,7 +54,6 @@ export async function POST(req: NextRequest) {
 
     // Clean up the uploaded file
     fs.unlinkSync(filePath);
-    console.log(transcription)
 
     // Return the transcription result
     return NextResponse.json({ transcription: simplifiedSegments });

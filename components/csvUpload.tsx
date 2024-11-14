@@ -35,7 +35,7 @@ const CsvUpload: React.FC = ({csvFile, setCsvFile}) => {
             className={`flex-1 py-8 border-2 border-dashed rounded-md cursor-pointer hover:bg-muted transition-colors duration-200 flex flex-col items-center justify-center text-muted-foreground border-blue-500 bg-blue-100 dark:bg-blue-950`}
           >
             <FileUp className="w-8 h-8 mb-2" />
-            <span>Click to upload</span>
+            <span>Click to select</span>
             <span className="text-xs">
               {csvFile
                 ? `${csvFile.name} selected`
